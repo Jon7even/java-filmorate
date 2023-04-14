@@ -16,14 +16,11 @@ public class User {
     @Email
     private String email;
 
-    @NotNull
     @NotBlank
     private String login;
 
     private String name;
 
-    @NotNull
-    @NotBlank
     @Past
     private LocalDate birthday;
 }
