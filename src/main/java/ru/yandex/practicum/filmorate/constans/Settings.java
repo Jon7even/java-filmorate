@@ -2,9 +2,21 @@
  * Copyright (c) 2023 HomeWork. Yandex Practicum. All rights reserved.
  *
  * DangerZone!!!
+ *
+ * SET_MIN_DATE
  * При изменении настройки SET_MIN_DATE, необходимо изменить сообщение
  * о событии ReleaseDateFilms. Сделать это можно в файле с названием:
  * ValidationMessages.properties. Ключ - ReleaseDateFilms.invalid
+ *
+ * BAN_LIST_ADD_LOGIN
+ * Список логинов, которые запрещены для регистрации и обновления.
+ * Эндпоинты: createUser("/users") и updateUser("/users")
+ * Редактируйте список в файле: BanListAddLogin.properties
+ *
+ * BAN_LIST_FIND_LOGIN
+ * Список логинов, которые не будут отображаться при запросе общего
+ * списка пользователей. Эндпоинт: getAllUsers("/users")
+ * Редактируйте список в файле: BanListFindLogin.properties
  *
  */
 
