@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
 
 @RestController
 @RequestMapping("/users")
@@ -22,15 +26,21 @@ public class UserController {
     public List<User> getAllUsers() {
         log.info("Сделан запрос на получение списка всех пользователей");
         return new ArrayList<>(users.values());
+        // users.values().stream().filter(user -> user.getLogin().equalsIgnoreCase(BAN_LIST_FIND_LOGIN.get(0)))
+        //                .collect(Collectors.toList());
+        //не забыть разобраться как пройтись по всему списку!!!
     }
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
+        if (isCheckLoginInBanList(user.getLogin())) {
+            throw new ValidationException("Регистрировать пользователя с такими именем запрещено - " + user.getLogin());
+        }
+        if (isCheckEmailInDateBase(user.getEmail())) {
+            throw new ValidationException("Пользователь с таким email - " + user.getEmail() + " уже существует");
+        }
         if (isCheckName(user)) {
             user.setName(user.getLogin());
-        }
-        if (isCheckEmailInDateBase(user.getEmail())){
-            throw new ValidationException("Пользователь с таким email - "+ user.getEmail() +" уже существует");
         }
         user.setId(idGenerator++);
         users.put(user.getId(), user);
@@ -42,6 +52,12 @@ public class UserController {
     public User updateUser(@Valid @RequestBody User user) {
         int userId = user.getId();
         if (users.containsKey(userId)) {
+            if (isCheckLoginInBanList(user.getLogin())) {
+                throw new ValidationException("Изменение на такой \"login\" - " + user.getLogin() + " запрещено");
+            }
+            if (isCheckEmailInDateBase(user.getEmail())) {
+                throw new ValidationException("Данный email - " + user.getEmail() + " уже находится в БД");
+            }
             User oldUser = users.get(userId);
             if (isCheckName(user)) {
                 user.setName(user.getLogin());
@@ -50,9 +66,6 @@ public class UserController {
             if (user.equals(oldUser)) {
                 log.warn("При обновлении данных аккаунта, пользователь с ID={} не дал новых данных " +
                         "если это сообщение повторится, на это стоит обратить внимание", userId);
-            }
-            if (isCheckEmailInDateBase(user.getEmail())){
-                throw new ValidationException("Данный email - " + user.getEmail() + " уже находится в БД");
             }
             log.info("Пользователь с ID={} успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
                     userId, oldUser.toString(), users.get(userId));
@@ -71,6 +84,10 @@ public class UserController {
     }
 
     private Boolean isCheckEmailInDateBase(String emailCheck) {
-        return users.values().stream().anyMatch(user -> user.getEmail().equals(emailCheck));
+        return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(emailCheck));
+    }
+
+    private Boolean isCheckLoginInBanList(String login) {
+        return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
     }
 }
