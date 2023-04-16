@@ -34,6 +34,9 @@ public class UserController {
         if (isCheckLoginInBanList(user.getLogin())) {
             throw new ValidationException("Регистрировать пользователя с такими именем запрещено - " + user.getLogin());
         }
+        if (isCheckLoginOnDuplicate(user.getLogin())) {
+            throw new ValidationException("Пользователь с таким же логином уже имеется в системе - " + user.getLogin());
+        }
         if (isCheckEmailInDateBase(user.getEmail())) {
             throw new ValidationException("Пользователь с таким email - " + user.getEmail() + " уже существует");
         }
@@ -87,5 +90,9 @@ public class UserController {
 
     private Boolean isCheckLoginInBanList(String login) {
         return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
+    }
+
+    private Boolean isCheckLoginOnDuplicate(String login) {
+        return users.values().stream().anyMatch(user -> user.getLogin().equalsIgnoreCase(login));
     }
 }
