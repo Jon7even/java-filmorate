@@ -9,8 +9,10 @@ import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
 
 @RestController
 @RequestMapping("/users")
