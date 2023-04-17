@@ -1,22 +1,35 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
+import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
 
+@SpringBootTest
 public class FilmControllerTest {
     private FilmController filmController;
+    private Validator validator;
     private Film filmDefault1;
     private Film filmDefault2;
 
     @BeforeEach
     void setUp() {
         filmController = new FilmController();
+        ValidatorFactory factory = buildDefaultValidatorFactory();
+        validator = factory.getValidator();
         initFilms();
     }
 
@@ -28,6 +41,7 @@ public class FilmControllerTest {
     }
 
     @Test
+    @DisplayName("Фильм должен создаться с релевантными полями")
     void shouldCreateFilm() {
         filmController.addFilm(filmDefault1);
         List<Film> filmList = filmController.getAllFilms();
@@ -40,6 +54,7 @@ public class FilmControllerTest {
     }
 
     @Test
+    @DisplayName("Фильм должен обновить все поля")
     void shouldPutFilm() {
         filmController.addFilm(filmDefault1);
         filmController.updateFilm(filmDefault2);
@@ -47,42 +62,61 @@ public class FilmControllerTest {
         assertEquals(1, filmList.size(), "Quantity films must be 1");
         assertEquals(filmDefault2.getId(), filmList.get(0).getId(), "ID Film must be 1");
         assertEquals(filmDefault2.getName(), filmList.get(0).getName(), "Name should equals");
-        assertEquals(filmDefault2.getDescription(), filmList.get(0).getDescription(), "Description should equals");
-        assertEquals(filmDefault2.getReleaseDate(), filmList.get(0).getReleaseDate(), "ReleaseDate should equals");
+        assertEquals(filmDefault2.getDescription(), filmList.get(0).getDescription(),
+                "Description should equals");
+        assertEquals(filmDefault2.getReleaseDate(), filmList.get(0).getReleaseDate(),
+                "ReleaseDate should equals");
         assertEquals(filmDefault2.getDuration(), filmList.get(0).getDuration(), "Duration should equals");
     }
 
     @Test
-    void donTShouldBeNameIsEmpty() {
+    @DisplayName("Если поле name некорректно, валидатор должен сработать")
+    void shouldNotCreateFilmWithNameIsEmpty() {
         filmDefault1.setName("");
-        filmController.addFilm(filmDefault1);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(0, filmList.size(), "Name cannot be empty");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+                "Name not be empty");
+
+        filmDefault2.setName(null);
+        violations = validator.validate(filmDefault2);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+                "Name not be empty");
     }
 
     @Test
-    void donTShouldBeDescriptionLength200() {
+    @DisplayName("Если поле description некорректно, валидатор должен сработать")
+    void shouldNotCreateFilmWithDescriptionLength200() {
         filmDefault1.setDescription("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
                 "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
                 "testtesttesttesttestt");
-        filmController.addFilm(filmDefault1);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(0, filmList.size(), "Maximum length of the description is 200 characters");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("размер должен находиться в диапазоне от 0 до 200")),
+                "Maximum length of the description is 200 characters");
     }
 
     @Test
-    void donTShouldBeDataReleaseBefore() {
+    @DisplayName("Если дата релиза фильма раньше заданной даты, валидатор должен сработать")
+    void shouldNotCreateFilmWithDataReleaseBefore() {
         filmDefault1.setReleaseDate(LocalDate.of(1007, 7, 1));
-        filmController.addFilm(filmDefault1);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(0, filmList.size(), "Release date — no earlier than December 28, 1895");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("Фильмы с датой релиза раньше " + SET_MIN_DATE + " нельзя публиковать")),
+                "Release date — no earlier than " + SET_MIN_DATE);
     }
 
     @Test
-    void donTShouldBeDurationMinus() {
+    @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
+    void shouldNotCreateFilmWithDurationMinus() {
         filmDefault1.setDuration(-1);
-        filmController.addFilm(filmDefault1);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(0, filmList.size(), "Duration of the film should be positive");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("должно быть больше 0")),
+                "Duration of the film should be positive");
     }
 }
