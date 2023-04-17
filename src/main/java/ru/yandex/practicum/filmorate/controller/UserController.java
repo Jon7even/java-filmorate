@@ -6,12 +6,13 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
 
 @RestController
 @RequestMapping("/users")
@@ -22,11 +23,9 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        log.info("Сделан запрос на получение списка всех пользователей");
-        return new ArrayList<>(users.values());
-        // users.values().stream().filter(user -> user.getLogin().equalsIgnoreCase(BAN_LIST_FIND_LOGIN.get(0)))
-        //                .collect(Collectors.toList());
-        //не забыть разобраться как пройтись по всему списку!!!
+        log.info("Сделан запрос на получение списка всех пользователей. *Работает фильтр BanListFindLogin.properties");
+        return users.values().stream().filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
+                .collect(Collectors.toList());
     }
 
     @PostMapping

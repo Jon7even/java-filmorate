@@ -4,6 +4,7 @@
  * DangerZone!!!
  *
  * SET_MIN_DATE
+ * Общий запрет внесения фильма, раньше определенной даты.
  * При изменении настройки SET_MIN_DATE, необходимо изменить сообщение
  * о событии ReleaseDateFilms. Сделать это можно в файле с названием:
  * ValidationMessages.properties. Ключ - ReleaseDateFilms.invalid
