@@ -96,7 +96,7 @@ public class FilmControllerTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("размер должен находиться в диапазоне от 0 до 200")),
+                        .equals("размер поля Description находиться в диапазоне от 0 до 200 символов")),
                 "Maximum length of the description is 200 characters");
     }
 
@@ -117,7 +117,7 @@ public class FilmControllerTest {
         filmDefault1.setDuration(-1);
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле должно быть положительным")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Duration должно быть положительным")),
                 "Duration of the film should be positive");
     }
 }

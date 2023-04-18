@@ -9,6 +9,8 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
+import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
+
 @Data
 public class Film {
     private int id;
@@ -17,15 +19,15 @@ public class Film {
     private String name;
 
     @NotNull
-    @Size(max = 200)
+    @Size(max = 200, message = "размер поля Description находиться в диапазоне от 0 до 200 символов")
     private String description;
 
     @NotNull
-    @ReleaseDateFilms
+    @ReleaseDateFilms()
     private LocalDate releaseDate;
 
     @NotNull
-    @Positive(message = "Поле должно быть положительным")
+    @Positive(message = "Поле Duration должно быть положительным")
     private long duration;
 
     public Film(int id, String name, String description, LocalDate releaseDate, long duration) {
