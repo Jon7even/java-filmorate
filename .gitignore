@@ -10,7 +10,7 @@
 hs_err_pid*
 out/
 target/
-.mvn/
+.mvn/*
 !**/src/main/**/target/
 !**/src/test/**/target/
 .gitattributes
