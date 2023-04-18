@@ -25,7 +25,7 @@ public class Film {
     private LocalDate releaseDate;
 
     @NotNull
-    @Positive(message = "Поле должно быть положительным")
+    @Positive()
     private long duration;
 
     public Film(int id, String name, String description, LocalDate releaseDate, long duration) {

@@ -66,7 +66,7 @@ public class UserControllerTest {
         assertEquals(userNotName.getBirthday(), userList.get(0).getBirthday(), "Birthday should equals");
     }
 
-/*    @Test
+    @Test
     @DisplayName("Если поле email некорректно, валидатор должен сработать")
     void shouldBeValidationEmail() {
         userDefault.setEmail("yandexyandex.ru");
@@ -81,9 +81,9 @@ public class UserControllerTest {
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
                 "Email should have symbol @");
-    }*/
+    }
 
-/*    @Test
+    @Test
     @DisplayName("Если поле login некорректно, валидатор должен сработать")
     void shouldBeValidationLogin() {
         userDefault.setLogin("");
@@ -100,7 +100,7 @@ public class UserControllerTest {
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
                 "Login don't be null");
-    }*/
+    }
 
     @Test
     @DisplayName("Если поле name не указано, name должно быть равно login")
@@ -113,7 +113,7 @@ public class UserControllerTest {
         assertEquals(userNotName.getLogin(), userList.get(1).getName(), "Name must be login");
     }
 
-/*    @Test
+    @Test
     @DisplayName("Если поле birthday некорректно, валидатор должен сработать")
     void shouldBeValidationBirthday() {
         userDefault.setBirthday(LocalDate.of(2077, 7, 7));
@@ -127,7 +127,7 @@ public class UserControllerTest {
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("должно содержать прошедшую дату")),
                 "Birthday can't be later");
-    }*/
+    }
 
     @Test
     @DisplayName("Если пользователь с таким login уже есть в базе")
