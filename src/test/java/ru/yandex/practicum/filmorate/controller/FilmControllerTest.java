@@ -111,14 +111,13 @@ public class FilmControllerTest {
                 "Release date — no earlier than " + SET_MIN_DATE);
     }
 
-/*    @Test
-    @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
+    @Test
+   // @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithDurationMinus() {
         filmDefault1.setDuration(-1);
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("должно быть больше 0")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле должно быть положительным")),
                 "Duration of the film should be positive");
-    }*/
+    }
 }
