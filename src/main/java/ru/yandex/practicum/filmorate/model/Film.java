@@ -9,8 +9,6 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
-
 @Data
 public class Film {
     private int id;

@@ -9,18 +9,18 @@ import java.time.LocalDate;
 public class User {
     private int id;
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "Поле Email не должно быть пустым")
+    @Email(message = "Поле Email должно иметь формат адреса электронной почты")
     private String email;
 
-    @NotBlank
-    @Size(min = 3, max = 20)
+    @NotBlank(message = "Поле Login не должно быть пустым")
+    @Size(min = 3, max = 20, message = "Длина поля Login должна находиться в диапазоне от 3 до 20 символов")
     private String login;
 
     private String name;
 
     @NotNull
-    @Past
+    @Past(message = "Поле Birthday должно содержать прошедшую дату")
     private LocalDate birthday;
 
     public User(int id, String email, String login, String name, LocalDate birthday) {

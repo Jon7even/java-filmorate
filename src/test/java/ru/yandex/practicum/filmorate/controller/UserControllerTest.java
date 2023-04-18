@@ -73,13 +73,13 @@ public class UserControllerTest {
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("должно иметь формат адреса электронной почты")),
+                        .equals("Поле Email должно иметь формат адреса электронной почты")),
                 "Email don't should empty");
 
         userNotName.setEmail("");
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Email не должно быть пустым")),
                 "Email should have symbol @");
     }
 
@@ -89,16 +89,16 @@ public class UserControllerTest {
         userDefault.setLogin("");
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(2, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Login не должно быть пустым")),
                 "Login don't should empty");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("размер должен находиться в диапазоне от 3 до 20")),
+                        .equals("Длина поля Login должна находиться в диапазоне от 3 до 20 символов")),
                 "login should have 3-20 symbol");
 
         userNotName.setLogin(null);
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Login не должно быть пустым")),
                 "Login don't be null");
     }
 
@@ -119,14 +119,14 @@ public class UserControllerTest {
         userDefault.setBirthday(LocalDate.of(2077, 7, 7));
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("должно содержать прошедшую дату")),
-                "Birthday can't be later");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("Поле Birthday должно содержать прошедшую дату")),"Birthday can't be later");
 
         userNotName.setBirthday(LocalDate.now());
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("должно содержать прошедшую дату")),
-                "Birthday can't be later");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("Поле Birthday должно содержать прошедшую дату")),"Birthday can't be later");
     }
 
     @Test
