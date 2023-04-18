@@ -76,13 +76,13 @@ public class FilmControllerTest {
         filmDefault1.setName("");
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Name не должно быть пустым")),
                 "Name not be empty");
 
         filmDefault2.setName(null);
         violations = validator.validate(filmDefault2);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Name не должно быть пустым")),
                 "Name not be empty");
     }
 

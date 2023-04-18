@@ -15,10 +15,9 @@ import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
 public class Film {
     private int id;
 
-    @NotBlank
+    @NotBlank(message = "Поле Name не должно быть пустым")
     private String name;
 
-    @NotNull
     @Size(max = 200, message = "размер поля Description находиться в диапазоне от 0 до 200 символов")
     private String description;
 
