@@ -87,7 +87,7 @@ public class FilmControllerTest {
     }
 */
 
-/*    @Test
+    @Test
     @DisplayName("Если поле description некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithDescriptionLength200() {
         filmDefault1.setDescription("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
@@ -98,7 +98,7 @@ public class FilmControllerTest {
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
                         .equals("размер должен находиться в диапазоне от 0 до 200")),
                 "Maximum length of the description is 200 characters");
-    }*/
+    }
 
     @Test
     @DisplayName("Если дата релиза фильма раньше заданной даты, валидатор должен сработать")
@@ -112,7 +112,7 @@ public class FilmControllerTest {
     }
 
     @Test
-   // @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
+    @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithDurationMinus() {
         filmDefault1.setDuration(-1);
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
