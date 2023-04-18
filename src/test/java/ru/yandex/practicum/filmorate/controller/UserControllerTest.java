@@ -136,9 +136,7 @@ public class UserControllerTest {
         userNotName.setLogin(userDefault.getLogin());
         final ValidationException exceptionSameLoginUser = assertThrows(
                 ValidationException.class,
-                () -> {
-                    userController.createUser(userNotName);
-                });
+                () -> userController.createUser(userNotName));
         assertEquals("Пользователь с таким же логином уже имеется в системе - userDefault",
                 exceptionSameLoginUser.getMessage());
     }
@@ -150,17 +148,13 @@ public class UserControllerTest {
         userNotName.setEmail(userDefault.getEmail());
         final ValidationException exceptionSameEmailAddUser = assertThrows(
                 ValidationException.class,
-                () -> {
-                    userController.createUser(userNotName);
-                });
+                () -> userController.createUser(userNotName));
         assertEquals("Пользователь с таким email - yandex@yandex.ru уже существует",
                 exceptionSameEmailAddUser.getMessage());
         userNotName.setEmail("yandex@yandex.ru");
         final ValidationException exceptionSameEmailPutUser = assertThrows(
                 ValidationException.class,
-                () -> {
-                    userController.updateUser(userNotName);
-                });
+                () -> userController.updateUser(userNotName));
         assertEquals("Данный email - yandex@yandex.ru уже находится в БД",
                 exceptionSameEmailPutUser.getMessage());
     }
@@ -171,9 +165,7 @@ public class UserControllerTest {
         userDefault.setLogin("admin");
         final ValidationException exceptionAddLoginUserAdmin = assertThrows(
                 ValidationException.class,
-                () -> {
-                    userController.createUser(userDefault);
-                });
+                () -> userController.createUser(userDefault));
         assertEquals("Регистрировать пользователя с такими именем запрещено - admin",
                 exceptionAddLoginUserAdmin.getMessage());
     }
