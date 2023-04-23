@@ -15,7 +15,7 @@ import java.util.Map;
 public class FilmService {
     private final Map<Integer, Film> films = new HashMap<>();
 
-    private static Integer idGenerator = 0;
+    private static Integer idGenerator = 1;
 
     private static Integer getIdGenerator() {
         return idGenerator++;
@@ -33,7 +33,7 @@ public class FilmService {
     public Film addFilm(Film film) {
         film.setId(getIdGenerator());
         films.put(film.getId(), film);
-        log.info("В БД успешно добавлен новый фильм с ID={}", film.getId());
+        log.info("В БД успешно добавлен новый фильм {}", films.get(film.getId()));
         return film;
     }
 
