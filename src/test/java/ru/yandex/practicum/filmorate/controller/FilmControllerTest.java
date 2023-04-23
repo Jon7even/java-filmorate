@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,20 +45,16 @@ public class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
+        filmService.resetFilmService();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initFilms();
     }
 
-    @AfterEach
-    public void resetFilmService() {
-        filmService.resetFilmService();
-    }
-
     void initFilms() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
                 LocalDate.of(1900, 1, 1), 100);
-        filmDefault2 = new Film(0, "filmDefault2", "description2",
+        filmDefault2 = new Film(1, "filmDefault2", "description2",
                 LocalDate.of(2007, 7, 1), 300);
     }
 
@@ -69,7 +64,7 @@ public class FilmControllerTest {
     void shouldCreateFilm_thenStatus201() throws Exception {
         mockMvc.perform(
                         post("/films")
-                                .content(objectMapper.writeValueAsString(filmService.addFilm(filmDefault1)))
+                                .content(objectMapper.writeValueAsString(filmDefault1))
                                 .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isCreated())
@@ -83,14 +78,14 @@ public class FilmControllerTest {
     @Test
     @DisplayName("Фильм должен обновить все поля")
     void shouldPutFilm_thenStatus200() throws Exception {
+        filmService.addFilm(filmDefault1);
         mockMvc.perform(
                         put("/films")
-                                .content(objectMapper.writeValueAsString(filmService.addFilm(filmDefault1)))
-                                .content(objectMapper.writeValueAsString(filmService.updateFilm(filmDefault2)))
+                                .content(objectMapper.writeValueAsString(filmDefault2))
                                 .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("id").value(0))
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("description").value("description2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("2007-07-01"))

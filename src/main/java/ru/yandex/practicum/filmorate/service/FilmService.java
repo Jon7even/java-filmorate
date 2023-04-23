@@ -55,7 +55,7 @@ public class FilmService {
     }
 
     public void resetFilmService() {
-        setIdGenerator(0);
+        setIdGenerator(1);
         films.clear();
     }
 }
