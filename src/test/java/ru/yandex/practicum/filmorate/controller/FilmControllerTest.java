@@ -1,74 +1,101 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 public class FilmControllerTest {
-    private FilmController filmController;
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private FilmService filmService;
+
     private Validator validator;
     private Film filmDefault1;
     private Film filmDefault2;
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initFilms();
     }
 
+    @AfterEach
+    public void resetFilmService() {
+        filmService.resetFilmService();
+    }
+
     void initFilms() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
                 LocalDate.of(1900, 1, 1), 100);
-        filmDefault2 = new Film(1, "filmDefault2", "description1",
+        filmDefault2 = new Film(0, "filmDefault2", "description2",
                 LocalDate.of(2007, 7, 1), 300);
     }
 
+
     @Test
     @DisplayName("Фильм должен создаться с релевантными полями")
-    void shouldCreateFilm() {
-        filmController.addFilm(filmDefault1);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(1, filmList.size(), "Quantity films must be 1");
-        assertEquals(filmDefault1.getId(), filmList.get(0).getId(), "ID Film must be 1");
-        assertEquals(filmDefault1.getName(), filmList.get(0).getName(), "Name should equals");
-        assertEquals(filmDefault1.getDescription(), filmList.get(0).getDescription(), "Description should equals");
-        assertEquals(filmDefault1.getReleaseDate(), filmList.get(0).getReleaseDate(), "ReleaseDate should equals");
-        assertEquals(filmDefault1.getDuration(), filmList.get(0).getDuration(), "Duration should equals");
+    void shouldCreateFilm_thenStatus201() throws Exception {
+        mockMvc.perform(
+                        post("/films")
+                                .content(objectMapper.writeValueAsString(filmService.addFilm(filmDefault1)))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("description").value("description1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("1900-01-01"))
+                .andExpect(MockMvcResultMatchers.jsonPath("duration").value("100"));
     }
 
     @Test
     @DisplayName("Фильм должен обновить все поля")
-    void shouldPutFilm() {
-        filmController.addFilm(filmDefault1);
-        filmController.updateFilm(filmDefault2);
-        List<Film> filmList = filmController.getAllFilms();
-        assertEquals(1, filmList.size(), "Quantity films must be 1");
-        assertEquals(filmDefault2.getId(), filmList.get(0).getId(), "ID Film must be 1");
-        assertEquals(filmDefault2.getName(), filmList.get(0).getName(), "Name should equals");
-        assertEquals(filmDefault2.getDescription(), filmList.get(0).getDescription(),
-                "Description should equals");
-        assertEquals(filmDefault2.getReleaseDate(), filmList.get(0).getReleaseDate(),
-                "ReleaseDate should equals");
-        assertEquals(filmDefault2.getDuration(), filmList.get(0).getDuration(), "Duration should equals");
+    void shouldPutFilm_thenStatus200() throws Exception {
+        mockMvc.perform(
+                        put("/films")
+                                .content(objectMapper.writeValueAsString(filmService.addFilm(filmDefault1)))
+                                .content(objectMapper.writeValueAsString(filmService.updateFilm(filmDefault2)))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(0))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault2"))
+                .andExpect(MockMvcResultMatchers.jsonPath("description").value("description2"))
+                .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("2007-07-01"))
+                .andExpect(MockMvcResultMatchers.jsonPath("duration").value("300"));
     }
-
 
     @Test
     @DisplayName("Если поле name некорректно, валидатор должен сработать")
