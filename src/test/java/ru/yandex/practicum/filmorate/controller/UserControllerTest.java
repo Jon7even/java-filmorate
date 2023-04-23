@@ -26,7 +26,6 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initUsers();
