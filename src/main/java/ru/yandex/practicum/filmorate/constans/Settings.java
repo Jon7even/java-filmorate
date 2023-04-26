@@ -33,6 +33,9 @@ import static java.nio.file.Files.lines;
 import static java.nio.file.Paths.get;
 
 public class Settings {
+    private Settings() {
+    }
+
     public static LocalDate SET_MIN_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
     private static final String HOME = System.getProperty("user.dir") + "/src/main/resources/";
     public static List<String> BAN_LIST_ADD_LOGIN;
