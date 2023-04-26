@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -37,7 +37,7 @@ public class FilmControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private FilmService filmService;
+    private InMemoryFilmStorage filmStorage;
 
     private Validator validator;
     private Film filmDefault1;
@@ -45,7 +45,7 @@ public class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
-        filmService.resetFilmService();
+        filmStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initFilms();
@@ -78,7 +78,7 @@ public class FilmControllerTest {
     @Test
     @DisplayName("Фильм должен обновить все поля")
     void shouldPutFilm_thenStatus200() throws Exception {
-        filmService.addFilm(filmDefault1);
+        filmStorage.addFilm(filmDefault1);
         mockMvc.perform(
                         put("/films")
                                 .content(objectMapper.writeValueAsString(filmDefault2))

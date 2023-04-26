@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -14,30 +14,30 @@ import java.util.List;
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
-    private FilmService filmService;
+    private FilmStorage filmStorage;
 
     @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
+    public FilmController(FilmStorage filmStorage) {
+        this.filmStorage = filmStorage;
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
         log.debug("Сделан запрос на получение списка всех фильмов");
-        return filmService.getAllFilms();
+        return filmStorage.getAllFilms();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film addFilm(@Valid @RequestBody Film film) {
         log.debug("Сделан запрос на добавление фильма");
-        return filmService.addFilm(film);
+        return filmStorage.addFilm(film);
     }
 
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.debug("Сделан запрос на обновление фильма");
-        return filmService.updateFilm(film);
+        return filmStorage.updateFilm(film);
     }
 }

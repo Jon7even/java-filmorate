@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -37,7 +37,7 @@ public class UserControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserService userService;
+    private InMemoryUserStorage inMemoryUserStorage;
     private Validator validator;
     private User userDefault;
     private User userDefault1;
@@ -45,7 +45,7 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userService.resetUserService();
+        inMemoryUserStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initUsers();
@@ -79,7 +79,7 @@ public class UserControllerTest {
     @Test
     @DisplayName("Пользователь должен обновить все поля")
     void shouldPutUser_thenStatus200() throws Exception {
-        userService.createUser(userDefault);
+        inMemoryUserStorage.createUser(userDefault);
         mockMvc.perform(
                         put("/users")
                                 .content(objectMapper.writeValueAsString(userDefault1))
@@ -134,9 +134,9 @@ public class UserControllerTest {
     @DisplayName("Если поле name не указано, name должно быть равно login")
     void shouldBeValidationName() {
         userDefault.setName(null);
-        userService.createUser(userDefault);
-        userService.createUser(userNotName);
-        List<User> userList = userService.getAllUsers();
+        inMemoryUserStorage.createUser(userDefault);
+        inMemoryUserStorage.createUser(userNotName);
+        List<User> userList = inMemoryUserStorage.getAllUsers();
         assertEquals(userDefault.getLogin(), userList.get(0).getName(), "Name must be login");
         assertEquals(userNotName.getLogin(), userList.get(1).getName(), "Name must be login");
     }
@@ -160,11 +160,11 @@ public class UserControllerTest {
     @Test
     @DisplayName("Если пользователь с таким login уже есть в базе")
     void shouldThrowExceptionSameLoginUser() {
-        userService.createUser(userDefault);
+        inMemoryUserStorage.createUser(userDefault);
         userNotName.setLogin(userDefault.getLogin());
         final ValidationException exceptionSameLoginUser = assertThrows(
                 ValidationException.class,
-                () -> userService.createUser(userNotName));
+                () -> inMemoryUserStorage.createUser(userNotName));
         assertEquals("Пользователь с таким же логином уже имеется в системе - userDefault",
                 exceptionSameLoginUser.getMessage());
     }
@@ -172,18 +172,18 @@ public class UserControllerTest {
     @Test
     @DisplayName("Если пользователь с таким email уже есть в базе")
     void shouldThrowExceptionSameEmailAddAndPutUser() {
-        userService.createUser(userDefault);
+        inMemoryUserStorage.createUser(userDefault);
         userNotName.setEmail(userDefault.getEmail());
         final ValidationException exceptionSameEmailAddUser = assertThrows(
                 ValidationException.class,
-                () -> userService.createUser(userNotName));
+                () -> inMemoryUserStorage.createUser(userNotName));
         assertEquals("Пользователь с таким email - yandex@yandex.ru уже существует",
                 exceptionSameEmailAddUser.getMessage());
         userNotName.setEmail("yandex@yandex.ru");
         userNotName.setId(1);
         final ValidationException exceptionSameEmailPutUser = assertThrows(
                 ValidationException.class,
-                () -> userService.updateUser(userNotName));
+                () -> inMemoryUserStorage.updateUser(userNotName));
         assertEquals("Данный email - yandex@yandex.ru уже находится в БД",
                 exceptionSameEmailPutUser.getMessage());
     }
@@ -194,7 +194,7 @@ public class UserControllerTest {
         userDefault.setLogin("admin");
         final ValidationException exceptionAddLoginUserAdmin = assertThrows(
                 ValidationException.class,
-                () -> userService.createUser(userDefault));
+                () -> inMemoryUserStorage.createUser(userDefault));
         assertEquals("Регистрировать пользователя с таким именем запрещено - admin",
                 exceptionAddLoginUserAdmin.getMessage());
     }
