@@ -1,64 +1,61 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
 
 @Slf4j
 @Service
 public class InMemoryUserStorage implements UserStorage {
     IdGenerator id;
-    private final Map<Integer, User> users = new HashMap<>();
+    private final Map<Integer, User> users;
 
-    @Autowired
-    public InMemoryUserStorage(IdGenerator idGenerator) {
-        this.id = idGenerator;
+    public InMemoryUserStorage() {
+        this.id = new IdGenerator();
+        this.users = new HashMap<>();
     }
 
     public List<User> getAllUsers() {
-        log.info("Сделан запрос на получение списка всех пользователей. *Работает фильтр BanListFindLogin.properties");
+        log.info("В БД выполняется запрос на получение списка всех пользователей. " +
+                "*Работает фильтр BanListFindLogin.properties");
         return users.values().stream().filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
                 .collect(Collectors.toList());
     }
 
     public User createUser(User user) {
-        if (isCheckLoginInBanList(user.getLogin())) {
-            throw new ValidationException("Регистрировать пользователя с таким именем запрещено - " + user.getLogin());
-        }
         if (isCheckLoginOnDuplicate(user.getLogin())) {
-            throw new ValidationException("Пользователь с таким же логином уже имеется в системе - " + user.getLogin());
+            throw new ValidationException(Collections.singleton(Map.of("login",
+                    String.format("Пользователь с таким логином [%s] уже имеется в системе", user.getLogin()))));
         }
         if (isCheckEmailInDateBase(user.getEmail())) {
-            throw new ValidationException("Пользователь с таким email - " + user.getEmail() + " уже существует");
+            throw new ValidationException(Collections.singleton(Map.of("login",
+                    String.format("Пользователь с таким email [%s] уже имеется в системе", user.getEmail()))));
         }
         if (isCheckName(user)) {
             user.setName(user.getLogin());
         }
         user.setId(id.getIdGenerator());
         users.put(user.getId(), user);
-        log.info("В БД успешно добавлен новый пользователь {}", users.get(user.getId()));
+        log.info("В БД добавлен новый пользователь {}", users.get(user.getId()));
         return user;
     }
 
     public User updateUser(User user) {
         int userId = user.getId();
         if (users.containsKey(userId)) {
-            if (isCheckLoginInBanList(user.getLogin())) {
-                throw new ValidationException("Изменение на такой \"login\" - " + user.getLogin() + " запрещено");
-            }
             if (isCheckEmailInDateBase(user.getEmail())) {
-                throw new ValidationException("Данный email - " + user.getEmail() + " уже находится в БД");
+                throw new ValidationException(Collections.singleton(Map.of("email",
+                        String.format("Данный email [%s] уже находится в БД", user.getEmail()))));
             }
             User oldUser = users.get(userId);
             if (isCheckName(user)) {
@@ -73,7 +70,8 @@ public class InMemoryUserStorage implements UserStorage {
                     userId, oldUser.toString(), users.get(userId));
             return user;
         } else {
-            throw new ValidationException("Пользователя с таким ID=" + userId + " не существует");
+            throw new ValidationException(Collections.singleton(Map.of("id",
+                    String.format("Пользователя с таким [ID=%d] не существует", user.getId()))));
         }
     }
 
@@ -87,10 +85,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     private Boolean isCheckEmailInDateBase(String emailCheck) {
         return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(emailCheck));
-    }
-
-    private Boolean isCheckLoginInBanList(String login) {
-        return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
     }
 
     private Boolean isCheckLoginOnDuplicate(String login) {

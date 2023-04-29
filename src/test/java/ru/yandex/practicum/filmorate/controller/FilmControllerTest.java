@@ -85,7 +85,7 @@ public class FilmControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("id").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(2))
                 .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("description").value("description2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("2007-07-01"))

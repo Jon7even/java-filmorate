@@ -1,8 +1,5 @@
 package ru.yandex.practicum.filmorate.utils;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public class IdGenerator {
     private Integer idGenerator = 1;
 

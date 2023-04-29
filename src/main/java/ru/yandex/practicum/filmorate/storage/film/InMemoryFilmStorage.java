@@ -1,31 +1,26 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
-@Service
+@Component
 public class InMemoryFilmStorage implements FilmStorage {
     IdGenerator id;
+    private final Map<Integer, Film> films;
 
-    private final Map<Integer, Film> films = new HashMap<>();
-
-    @Autowired
-    public InMemoryFilmStorage(IdGenerator idGenerator) {
-        this.id = idGenerator;
+    public InMemoryFilmStorage() {
+        this.id = new IdGenerator();
+        this.films = new HashMap<>();
     }
 
     public List<Film> getAllFilms() {
-        log.info("В БД выполняется запрос на получение всех фильмов");
+        log.info("В БД выполняется запрос на получение списка всех фильмов");
         return new ArrayList<>(films.values());
     }
 
@@ -49,7 +44,8 @@ public class InMemoryFilmStorage implements FilmStorage {
                     filmId, oldFilm.toString(), films.get(filmId));
             return film;
         } else {
-            throw new ValidationException("Фильма с таким ID=" + filmId + " не существует.");
+            throw new ValidationException(Collections.singleton(Map.of("errorValidation",
+                    String.format("Фильм с таким ID=%d уже имеется в системе", filmId))));
         }
     }
 
