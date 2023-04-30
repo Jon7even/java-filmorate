@@ -8,7 +8,7 @@ public class ApplicationException extends RuntimeException {
     HttpStatus responseStatus;
 
     public ApplicationException(String errorMessage, HttpStatus responseStatus) {
-        super();
+        super(errorMessage);
         this.errorCode = responseStatus.toString();
         this.errorMessage = errorMessage;
         this.responseStatus = responseStatus;
