@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotCreatedException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
@@ -31,26 +33,45 @@ public class FilmService {
 
     public Film addFilm(Film film) {
         log.debug("Сервис выполняет запрос в БД на добавление фильма");
-        Film requestFilm = filmStorage.addFilm(film);
-        if (requestFilm != null) {
-            log.debug("В БД успешно добавлен новый фильм {}", requestFilm.getName());
+        Film createdFilm = filmStorage.addFilm(film);
+        if (createdFilm != null) {
+            log.debug("В БД успешно добавлен новый фильм {}", createdFilm.getName());
         } else {
-            log.error("БД вернула null. По неизвестной причине не получилось добавить новый фильм");
+            log.error("Ошибка БД! Film is null. По неизвестной причине не получилось добавить новый фильм");
+            throw new NotCreatedException("New film");
         }
-        return requestFilm;
+        return createdFilm;
     }
 
     public Film updateFilm(Film film) {
+        filmNotFoundById(film.getId());
         log.debug("Сервис выполняет запрос в БД на обновление фильма с id={}", film.getId());
         Film updateFilm = filmStorage.addFilm(film);
         if (updateFilm != null) {
             log.debug("В БД успешно обновлен фильм {}", updateFilm.getName());
         } else {
-            log.error("БД вернула null. По неизвестной причине не получилось обновить фильм");
+            filmNotFoundById(0);
         }
         return updateFilm;
     }
 
+    public Film findFilmById(int id) {
+        filmNotFoundById(id);
+        log.debug("Сервис выполняет запрос в БД на получение фильма ID={}", id);
+        Film getFilm = filmStorage.findFilmById(id);
+        if (getFilm != null) {
+            log.debug("Из БД успешно получен фильм с ID={}", id);
+        } else {
+            filmNotFoundById(0);
+        }
+        return getFilm;
+    }
+
+    private void filmNotFoundById(int id) {
+        if (id <= 0) {
+            throw new NotFoundException(String.format("Film with ID=%d", id));
+        }
+    }
 
 
 /*    Создайте FilmService, который будет отвечать за операции с фильмами, — добавление и удаление лайка,

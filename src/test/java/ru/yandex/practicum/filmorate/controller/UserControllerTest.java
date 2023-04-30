@@ -24,8 +24,7 @@ import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -79,6 +78,20 @@ public class UserControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("login").value("userDefault"))
                 .andExpect(MockMvcResultMatchers.jsonPath("name").value("UserTest"))
                 .andExpect(MockMvcResultMatchers.jsonPath("birthday").value("2000-01-01"));
+    }
+
+    @Test
+    @DisplayName("Поиск пользователя по ID")
+    void shouldGetUser_thenById() throws Exception {
+        long idUser = userService.createUser(userDefault).getId();
+        mockMvc.perform(get("/users/{id}", idUser))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(idUser))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("UserTest"));
+        mockMvc.perform(get("/users/{id}", -1))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/users/{id}", idUser + 1))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotCreatedException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -40,20 +42,18 @@ public class UserService {
                     String.format("Регистрировать пользователя с таким именем [%s] запрещено", user.getLogin()))));
         }
         log.debug("Сервис выполняет запрос в БД на добавление нового пользователя");
-        User requestUser = userStorage.createUser(user);
-        if (requestUser != null) {
-            log.debug("В БД успешно добавлен новый пользователь {}", requestUser.getLogin());
+        User createdUser = userStorage.createUser(user);
+        if (createdUser != null) {
+            log.debug("В БД успешно добавлен новый пользователь {}", createdUser.getLogin());
         } else {
-            log.error("БД вернула null. По неизвестной причине не получилось добавить нового пользователя");
+            log.error("Ошибка БД! User is null. По неизвестной причине не получилось добавить нового пользователя");
+            throw new NotCreatedException("New user");
         }
-        return requestUser;
+        return createdUser;
     }
 
     public User updateUser(User user) {
-        if (user.getId() <= 0) {
-            throw new ValidationException(Collections.singleton(Map.of("id",
-                    "Поле должно быть положительным")));
-        }
+        userNotFoundById((user.getId()));
         if (isCheckLoginInBanList(user.getLogin())) {
             throw new ValidationException(Collections.singleton(Map.of("login",
                     String.format("Изменение логина на [%s] запрещено", user.getLogin()))));
@@ -63,14 +63,33 @@ public class UserService {
         if (updateUser != null) {
             log.debug("В БД успешно обновлены данные пользователя {}", updateUser.getLogin());
         } else {
-            log.error("БД вернула null. По неизвестной причине не получилось обновить пользователя");
+            userNotFoundById(0);
         }
         return updateUser;
+    }
+
+    public User findUserById(int id) {
+        userNotFoundById(id);
+        log.debug("Сервис выполняет запрос в БД на получение пользователя ID={}", id);
+        User getUser = userStorage.findUserById(id);
+        if (getUser != null) {
+            log.debug("Из БД успешно получен пользователь с ID={}", id);
+        } else {
+            userNotFoundById(0);
+        }
+        return getUser;
     }
 
     private Boolean isCheckLoginInBanList(String login) {
         return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
     }
+
+    private void userNotFoundById(int id) {
+        if (id <= 0) {
+            throw new NotFoundException(String.format("User with ID=%d", id));
+        }
+    }
+
 
 /*    Создайте UserService, который будет отвечать за такие операции с пользователями, как добавление в друзья,
     удаление из друзей, вывод списка общих друзей. Пока пользователям не надо одобрять заявки в друзья

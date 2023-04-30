@@ -23,8 +23,7 @@ import java.util.Set;
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
 
@@ -94,6 +93,20 @@ public class FilmControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("description").value("description2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("2007-07-01"))
                 .andExpect(MockMvcResultMatchers.jsonPath("duration").value("300"));
+    }
+
+    @Test
+    @DisplayName("Поиск фильма по ID")
+    void shouldGetFilm_thenById() throws Exception {
+        long idFilm = filmService.addFilm(filmDefault1).getId();
+        mockMvc.perform(get("/films/{id}", idFilm))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(idFilm))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault1"));
+        mockMvc.perform(get("/films/{id}", -1))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/films/{id}", idFilm + 1))
+                .andExpect(status().isNotFound());
     }
 
     @Test

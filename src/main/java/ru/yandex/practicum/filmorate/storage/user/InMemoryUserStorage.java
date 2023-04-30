@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
@@ -46,8 +47,9 @@ public class InMemoryUserStorage implements UserStorage {
         }
         user.setId(id.getIdGenerator());
         users.put(user.getId(), user);
-        log.info("В БД добавлен новый пользователь {}", users.get(user.getId()));
-        return user;
+        User createdUser = users.get(user.getId());
+        log.info("В БД добавлен новый пользователь {}", createdUser);
+        return createdUser;
     }
 
     public User updateUser(User user) {
@@ -62,16 +64,25 @@ public class InMemoryUserStorage implements UserStorage {
                 user.setName(user.getLogin());
             }
             users.put(userId, user);
-            if (user.equals(oldUser)) {
+            User updateUser = users.get(userId);
+            if (updateUser.equals(oldUser)) {
                 log.warn("При обновлении данных аккаунта, пользователь с ID={} не дал новых данных " +
                         "если это сообщение повторится, на это стоит обратить внимание", userId);
             }
             log.info("Пользователь с ID={} успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
-                    userId, oldUser.toString(), users.get(userId));
-            return user;
+                    userId, oldUser, updateUser);
+            return updateUser;
         } else {
-            throw new ValidationException(Collections.singleton(Map.of("id",
-                    String.format("Пользователя с таким [ID=%d] не существует", user.getId()))));
+            throw new NotFoundException(String.format("User with ID=%d", userId));
+        }
+    }
+
+    public User findUserById(int id) {
+        log.info("В БД выполняется запрос на получение пользователя с ID={}", id);
+        if (users.containsKey(id)) {
+            return users.get(id);
+        } else {
+            throw new NotFoundException(String.format("User with ID=%d", id));
         }
     }
 

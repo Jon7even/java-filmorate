@@ -40,4 +40,11 @@ public class FilmController {
         log.debug("Клиент сделал Http запрос на обновление фильма");
         return filmService.updateFilm(film);
     }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Film getFilm(@PathVariable("id") int id) {
+        log.debug("Клиент сделал Http запрос на получение фильма по ID={}", id);
+        return filmService.findFilmById(id);
+    }
 }
