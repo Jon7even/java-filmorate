@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
-import ru.yandex.practicum.filmorate.exception.NotRemovedException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -50,7 +49,7 @@ public class FilmController {
         return filmService.findFilmById(id);
     }
 
-    @PutMapping("/{id}/like/{userId}") //PUT /films/{id}/like/{userId} — пользователь ставит лайк фильму.
+    @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable int id,
                         @PathVariable int userId) {
@@ -58,7 +57,7 @@ public class FilmController {
         filmService.addLikeByUserId(id, userId);
     }
 
-    @DeleteMapping("/{id}/like/{userId}") //DELETE /films/{id}/like/{userId} — пользователь удаляет лайк.
+    @DeleteMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeLike(@PathVariable int id,
                            @PathVariable int userId) {
