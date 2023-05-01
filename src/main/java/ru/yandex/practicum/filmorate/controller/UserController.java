@@ -44,38 +44,41 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public User getUser(@PathVariable("id") int id) {
+    public User getUser(@PathVariable int id) {
         log.debug("Клиент сделал Http запрос на получение пользователя по ID={}", id);
         return userService.findUserById(id);
     }
 
-/*    @PutMapping
-    @ResponseStatus(HttpStatus.OK) //PUT /users/{id}/friends/{friendId} — добавление в друзья.
-    public User addFriend(@RequestBody User user) {
-        log.debug("Клиент сделал Http запрос на обновление пользователя с ID={}", user.getId());
-        return userService.updateUser(user);
+    @PutMapping("/{id}/friends/{friendId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addFriend(@PathVariable int id,
+                          @PathVariable int friendId) {
+        log.debug("Клиент с ID={} сделал Http запрос на добавление друга с ID={}", id, friendId);
+        userService.addFriend(id, friendId);
     }
 
-    @DeleteMapping
-    @ResponseStatus(HttpStatus.OK) //DELETE /users/{id}/friends/{friendId} — удаление из друзей.
-    public User updateUser(@Valid @RequestBody User user) {
-        log.debug("Клиент сделал Http запрос на обновление пользователя с ID={}", user.getId());
-        return userService.updateUser(user);
+    @DeleteMapping("/{id}/friends/{friendId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(@PathVariable int id,
+                             @PathVariable int friendId) {
+        log.debug("Клиент с ID={} сделал Http запрос на удаление друга с ID={}", id, friendId);
+        userService.removeFriend(id, friendId);
     }
 
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK) //GET /users/{id}/friends — возвращаем список пользователей, являющихся его друзьями.
-    public List<User> getAllUsers() {
-        log.debug("Клиент сделал Http запрос на получение списка всех пользователей");
-        return userService.getAllUsers();
+    @GetMapping("/{id}/friends")
+    @ResponseStatus(HttpStatus.OK)
+    public List<User> getAllFriendsByUserId(@PathVariable int id) {
+        log.debug("Клиент сделал Http запрос на получение списка друзей пользователя ID={}", id);
+        return userService.getAllFriendsByUserId(id);
     }
 
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK) //GET /users/{id}/friends/common/{otherId} — список друзей, общих с другим пользователем.
-    public List<User> getAllUsers() {
-        log.debug("Клиент сделал Http запрос на получение списка всех пользователей");
-        return userService.getAllUsers();
-    }*/
-
+    @GetMapping("{id}/friends/common/{otherId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<User> getAllCommonFriendsByUserId(@PathVariable int id,
+                                                  @PathVariable int otherId) {
+        log.debug("Клиент с ID={} сделал Http запрос на получение списка общих друзей пользователя ID={}",
+                id, otherId);
+        return userService.getAllCommonFriendsByUserId(id, otherId);
+    }
 
 }

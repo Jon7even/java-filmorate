@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotCreatedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
@@ -28,7 +29,15 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film addFilm(Film film) {
-        film.setId(id.getIdGenerator());
+        log.info("В БД выполняется запрос на добавление нового фильма");
+        int newId = id.getIdGenerator();
+
+        if (newId <= 0) {
+            log.error("Неизвестная ошибка генерации ID.");
+            throw new NotCreatedException("New film");
+        }
+
+        film.setId(newId);
         films.put(film.getId(), film);
         Film createdFilm = films.get(film.getId());
         log.info("В БД успешно добавлен новый фильм {}", createdFilm);
@@ -41,10 +50,12 @@ public class InMemoryFilmStorage implements FilmStorage {
             Film oldFilm = films.get(filmId);
             films.put(filmId, film);
             Film updateFilm = films.get(filmId);
+
             if (updateFilm.equals(oldFilm)) {
                 log.warn("При обновлении фильма с ID={} новых данных не было " +
                         "если это сообщение повторится, на это стоит обратить внимание", filmId);
             }
+
             log.info("Фильм с ID={} успешно обновлен в БД!\n Старый фильм: {},\n Новый фильм: {}",
                     filmId, oldFilm, updateFilm);
             return updateFilm;

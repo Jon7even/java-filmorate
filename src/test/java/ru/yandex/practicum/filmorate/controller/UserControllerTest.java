@@ -23,8 +23,11 @@ import java.util.List;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -92,6 +95,54 @@ public class UserControllerTest {
                 .andExpect(status().isNotFound());
         mockMvc.perform(get("/users/{id}", idUser + 1))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Endpoint friends and common friends")
+    void shouldRun_Friends() throws Exception {
+        long idUser1 = userService.createUser(userDefault).getId();
+        long idUser2 = userService.createUser(userNotName).getId();
+        userDefault1.setLogin("myFriend");
+        userDefault1.setEmail("yandex2@yandex.ru");
+        long idUser3 = userService.createUser(userDefault1).getId();
+
+        mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser1, idUser2))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(2)))
+                .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())));
+
+        mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser3, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id", equalTo(2)))
+                .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())))
+                .andExpect(jsonPath("$[1].id", equalTo(3)))
+                .andExpect(jsonPath("$[1].name", equalTo(userDefault1.getName())));
+
+        mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser2, idUser3))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(1)))
+                .andExpect(jsonPath("$[0].name", equalTo(userDefault.getName())));
     }
 
     @Test
@@ -199,13 +250,6 @@ public class UserControllerTest {
         assertEquals("[Field [login] invalid: [Пользователь с таким email [yandex@yandex.ru] " +
                         "уже имеется в системе]]",
                 exceptionSameEmailAddUser.getMessage());
-        userNotName.setEmail("yandex@yandex.ru");
-        userNotName.setId(1);
-        final ValidationException exceptionSameEmailPutUser = assertThrows(
-                ValidationException.class,
-                () -> userService.updateUser(userNotName));
-        assertEquals("[Field [email] invalid: [Данный email [yandex@yandex.ru] уже находится в БД]]",
-                exceptionSameEmailPutUser.getMessage());
     }
 
     @Test

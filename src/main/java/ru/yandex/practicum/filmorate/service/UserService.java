@@ -46,7 +46,7 @@ public class UserService {
         if (createdUser != null) {
             log.debug("В БД успешно добавлен новый пользователь {}", createdUser.getLogin());
         } else {
-            log.error("Ошибка БД! User is null. По неизвестной причине не получилось добавить нового пользователя");
+            log.error("Ошибка БД! User is null.");
             throw new NotCreatedException("New user");
         }
         return createdUser;
@@ -63,6 +63,7 @@ public class UserService {
         if (updateUser != null) {
             log.debug("В БД успешно обновлены данные пользователя {}", updateUser.getLogin());
         } else {
+            log.error("Ошибка БД! User is null.");
             userNotFoundById(0);
         }
         return updateUser;
@@ -75,9 +76,60 @@ public class UserService {
         if (getUser != null) {
             log.debug("Из БД успешно получен пользователь с ID={}", id);
         } else {
+            log.error("Ошибка БД! User is null.");
             userNotFoundById(0);
         }
         return getUser;
+    }
+
+    public void addFriend(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на добавление в друзья пользователя ID={} к пользователю ID={}",
+                idFriend, idUser);
+        User getUser = userStorage.addFriend(idUser, idFriend);
+        if (getUser.getFriends().contains(idFriend)) {
+            log.debug("В БД успешно добавлен друг ID={} пользователю ID={}", idFriend, idUser);
+        } else {
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
+        }
+    }
+
+    public void removeFriend(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на удаление из друзей пользователя ID={} у пользователя ID={}",
+                idFriend, idUser);
+        userStorage.removeFriend(idUser, idFriend);
+    }
+
+    public List<User> getAllFriendsByUserId(int idUser) {
+        userNotFoundById(idUser);
+        log.debug("Сервис выполняет запрос в БД на получение списка друзей пользователя ID={}", idUser);
+        List<User> listAllFriendsByUserId = userStorage.getAllFriendsByUserId(idUser);
+        if (listAllFriendsByUserId.isEmpty()) {
+            log.debug("Из БД вернулся пустой список друзей пользователя ID={}", idUser);
+        } else {
+            log.debug("Из БД успешно получен список друзей пользователя ID={}", idUser);
+        }
+        return listAllFriendsByUserId;
+    }
+
+    public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на получение общего списка друзей пользователя ID={} " +
+                "с пользователем ID={}", idUser, idFriend);
+        List<User> listAllCommonFriendsByUserId = userStorage.getAllCommonFriendsByUserId(idUser, idFriend);
+
+        if (listAllCommonFriendsByUserId.isEmpty()) {
+            log.debug("Из БД вернулся пустой список общих друзей пользователя ID={} с пользователем ID={}",
+                    idUser, idFriend);
+        } else {
+            log.debug("Из БД успешно получен список общих друзей пользователя ID={} и ID={}", idUser, idFriend);
+        }
+        return listAllCommonFriendsByUserId;
     }
 
     private Boolean isCheckLoginInBanList(String login) {
@@ -89,9 +141,4 @@ public class UserService {
             throw new NotFoundException(String.format("User with ID=%d", id));
         }
     }
-
-
-/*    Создайте UserService, который будет отвечать за такие операции с пользователями, как добавление в друзья,
-    удаление из друзей, вывод списка общих друзей. Пока пользователям не надо одобрять заявки в друзья
-        — добавляем сразу. То есть если Лена стала другом Саши, то это значит, что Саша теперь друг Лены.*/
 }
