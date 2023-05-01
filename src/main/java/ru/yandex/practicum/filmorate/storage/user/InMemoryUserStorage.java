@@ -64,7 +64,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     public User updateUser(User user) {
         int userId = user.getId();
-        log.info("В БД выполняется запрос на обновление данных пользователя с ID={}", userId);
+        log.info("В БД выполняется запрос на обновление данных пользователя ID={}", userId);
 
         if (users.containsKey(userId)) {
             if (isCheckEmailInDateBase(user.getEmail())) {
@@ -82,6 +82,7 @@ public class InMemoryUserStorage implements UserStorage {
                 log.warn("При обновлении данных аккаунта, пользователь с ID={} не дал новых данных " +
                         "если это сообщение повторится, на это стоит обратить внимание", userId);
             }
+
             log.info("Пользователь с ID={} успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
                     userId, oldUser, updateUser);
             return updateUser;
@@ -91,7 +92,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User findUserById(int id) {
-        log.info("В БД выполняется запрос на получение данных пользователя с ID={}", id);
+        log.info("В БД выполняется запрос на получение данных пользователя ID={}", id);
         if (users.containsKey(id)) {
             return users.get(id);
         } else {
@@ -100,25 +101,28 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User addFriend(int idUser, int idFriend) {
-        log.info("В БД выполняется запрос на добавление друга ID={} пользователю с ID={}", idFriend, idUser);
+        log.info("В БД выполняется запрос на добавление друга ID={} пользователю ID={}", idFriend, idUser);
         User findUser = findUserById(idUser);
-        User friendUser = findUserById(idFriend);
         findUser.addFriend(idFriend);
-        friendUser.addFriend(idUser);
         updateUser(findUser);
+
+        User friendUser = findUserById(idFriend);
+        friendUser.addFriend(idUser);
         updateUser(friendUser);
-        User addedFriend = findUserById(idUser);
-        if (addedFriend.getFriends().contains(idFriend)) {
+
+        User addedFriendUser = findUserById(idUser);
+
+        if (addedFriendUser.getFriends().contains(idFriend)) {
             log.info("Пользователю ID={} успешно добавлен друг ID={}", idUser, idFriend);
-            return addedFriend;
+            return addedFriendUser;
         } else {
             log.error("Ошибка БД. Пользователю ID={} не добавлен друг ID={}", idUser, idFriend);
             throw new NotCreatedException(String.format("New friend for user ID=%d", idUser));
         }
     }
 
-    public void removeFriend(int idUser, int idFriend) {
-        log.info("В БД выполняется запрос на удаление друга ID={} у пользователя с ID={}", idFriend, idUser);
+    public User removeFriend(int idUser, int idFriend) {
+        log.info("В БД выполняется запрос на удаление друга ID={} у пользователя ID={}", idFriend, idUser);
         User findUser = findUserById(idUser);
         User friendUser = findUserById(idFriend);
 
@@ -135,8 +139,9 @@ public class InMemoryUserStorage implements UserStorage {
         } else {
             throw new NotFoundException(String.format("Friend ID=%d for user ID=%d", idUser, idFriend));
         }
+        User removedUser = findUserById(idUser);
 
-        if (findUserById(idUser).getFriends().contains(idFriend)) {
+        if (removedUser.getFriends().contains(idFriend)) {
             log.error("Ошибка БД. У пользователя ID={} не удален друг ID={}", idUser, idFriend);
             throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         } else {
@@ -149,6 +154,8 @@ public class InMemoryUserStorage implements UserStorage {
         } else {
             log.info("У Пользователя ID={} успешно удалён друг ID={}", idFriend, idUser);
         }
+
+        return removedUser;
     }
 
     public List<User> getAllFriendsByUserId(int idUser) {

@@ -7,10 +7,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -46,8 +44,10 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     public Film updateFilm(Film film) {
         int filmId = film.getId();
+
         if (films.containsKey(filmId)) {
             Film oldFilm = films.get(filmId);
+
             films.put(filmId, film);
             Film updateFilm = films.get(filmId);
 
@@ -71,6 +71,52 @@ public class InMemoryFilmStorage implements FilmStorage {
         } else {
             throw new NotFoundException(String.format("Film with ID=%d", id));
         }
+    }
+
+    public Film addLikeByUserId(int idFilm, int userId) {
+        log.info("В БД выполняется запрос на добавление лайка фильму ID={} пользователем ID={}", idFilm, userId);
+        Film findFilm = findFilmById(idFilm);
+        findFilm.addLike(userId);
+        updateFilm(findFilm);
+        Film addedLikeFilm = findFilmById(idFilm);
+
+        if (addedLikeFilm.getLikes().contains(userId)) {
+            log.info("Фильму ID={} успешно поставил лайк пользователь ID={}", idFilm, userId);
+            return addedLikeFilm;
+        } else {
+            log.error("Ошибка БД. Фильму ID={} пользователь ID={} лайк не поставил", idFilm, userId);
+            throw new NotCreatedException(String.format("New like for film ID=%d", idFilm));
+        }
+    }
+
+    public Film removeLikeByUserId(int idFilm, int userId) {
+        log.info("В БД выполняется запрос на удаление лайка фильму ID={} пользователем ID={}", idFilm, userId);
+        Film findFilm = findFilmById(idFilm);
+
+        if (findFilm.getLikes().contains(userId)) {
+            findFilm.removeLike(userId);
+            updateFilm(findFilm);
+        } else {
+            throw new NotFoundException(String.format("Like film ID=%d by user ID=%d", idFilm, userId));
+        }
+        Film removedLikeFilm = findFilmById(idFilm);
+
+        if (removedLikeFilm.getLikes().contains(userId)) {
+            log.error("Ошибка БД. Фильму ID={} пользователь ID={} лайк не удалил", idFilm, userId);
+            throw new NotCreatedException(String.format("Like for film ID=%d by user ID=%d", idFilm, userId));
+        } else {
+            log.info("Фильму ID={} успешно удалил лайк пользователь ID={}", idFilm, userId);
+            return removedLikeFilm;
+        }
+    }
+
+    public List<Film> getPopularFilms(int count) {
+        log.info("В БД выполняется запрос на получение списка count={} популярных фильмов", count);
+        return films.values().stream()
+                .sorted(Comparator.comparingInt(Film::getCountLikes)
+                        .reversed())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     public void clearRepository() {

@@ -72,7 +72,7 @@ public class UserController {
         return userService.getAllFriendsByUserId(id);
     }
 
-    @GetMapping("{id}/friends/common/{otherId}")
+    @GetMapping("/{id}/friends/common/{otherId}")
     @ResponseStatus(HttpStatus.OK)
     public List<User> getAllCommonFriendsByUserId(@PathVariable int id,
                                                   @PathVariable int otherId) {

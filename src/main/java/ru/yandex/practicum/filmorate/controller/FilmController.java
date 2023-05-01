@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
+import ru.yandex.practicum.filmorate.exception.NotRemovedException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -47,4 +49,32 @@ public class FilmController {
         log.debug("Клиент сделал Http запрос на получение фильма по ID={}", id);
         return filmService.findFilmById(id);
     }
+
+    @PutMapping("/{id}/like/{userId}") //PUT /films/{id}/like/{userId} — пользователь ставит лайк фильму.
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addLike(@PathVariable int id,
+                        @PathVariable int userId) {
+        log.debug("Клиент с ID={} сделал Http запрос на добавление лайка фильму с ID={}", userId, id);
+        filmService.addLikeByUserId(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}") //DELETE /films/{id}/like/{userId} — пользователь удаляет лайк.
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeLike(@PathVariable int id,
+                           @PathVariable int userId) {
+        log.debug("Клиент с ID={} сделал Http запрос на удаление лайка у фильма с ID={}", userId, id);
+        filmService.removeLikeByUserId(id, userId);
+    }
+
+    @GetMapping("/popular")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+        log.debug("Клиент сделал Http запрос на получение списка популярных фильмов");
+        if (!(count <= 0)) {
+            return filmService.getPopularFilms(count);
+        } else {
+            throw new IncorrectParameterException("count");
+        }
+    }
+
 }

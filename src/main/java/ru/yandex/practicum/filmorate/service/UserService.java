@@ -28,10 +28,11 @@ public class UserService {
     public List<User> getAllUsers() {
         log.debug("Сервис выполняет запрос в БД на получение списка всех пользователей");
         List<User> listUser = userStorage.getAllUsers();
+
         if (listUser.isEmpty()) {
             log.debug("Из БД вернулся пустой список пользователей");
         } else {
-            log.debug("Из БД успешно получен список пользователей");
+            log.debug("Из БД успешно получен список из count={} пользователей", listUser.size());
         }
         return listUser;
     }
@@ -43,6 +44,7 @@ public class UserService {
         }
         log.debug("Сервис выполняет запрос в БД на добавление нового пользователя");
         User createdUser = userStorage.createUser(user);
+
         if (createdUser != null) {
             log.debug("В БД успешно добавлен новый пользователь {}", createdUser.getLogin());
         } else {
@@ -60,6 +62,7 @@ public class UserService {
         }
         log.debug("Сервис выполняет запрос в БД на обновление данных пользователя с id={}", user.getId());
         User updateUser = userStorage.updateUser(user);
+
         if (updateUser != null) {
             log.debug("В БД успешно обновлены данные пользователя {}", updateUser.getLogin());
         } else {
@@ -73,6 +76,7 @@ public class UserService {
         userNotFoundById(id);
         log.debug("Сервис выполняет запрос в БД на получение пользователя ID={}", id);
         User getUser = userStorage.findUserById(id);
+
         if (getUser != null) {
             log.debug("Из БД успешно получен пользователь с ID={}", id);
         } else {
@@ -88,8 +92,10 @@ public class UserService {
         log.debug("Сервис выполняет запрос в БД на добавление в друзья пользователя ID={} к пользователю ID={}",
                 idFriend, idUser);
         User getUser = userStorage.addFriend(idUser, idFriend);
+
         if (getUser.getFriends().contains(idFriend)) {
-            log.debug("В БД успешно добавлен друг ID={} пользователю ID={}", idFriend, idUser);
+            log.debug("В БД успешно обновлены данные ID={} пользователя: добавлен пользователь ID={} в друзья",
+                    idUser, idFriend);
         } else {
             log.error("Ошибка БД! User is null.");
             userNotFoundById(0);
@@ -101,17 +107,27 @@ public class UserService {
         userNotFoundById(idFriend);
         log.debug("Сервис выполняет запрос в БД на удаление из друзей пользователя ID={} у пользователя ID={}",
                 idFriend, idUser);
-        userStorage.removeFriend(idUser, idFriend);
+        User getUser = userStorage.removeFriend(idUser, idFriend);
+
+        if (getUser.getFriends().contains(idFriend)) {
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
+        } else {
+            log.debug("В БД успешно обновлены данные ID={} пользователя: удалён пользователь ID={} из друзей",
+                    idUser, idFriend);
+        }
     }
 
     public List<User> getAllFriendsByUserId(int idUser) {
         userNotFoundById(idUser);
         log.debug("Сервис выполняет запрос в БД на получение списка друзей пользователя ID={}", idUser);
         List<User> listAllFriendsByUserId = userStorage.getAllFriendsByUserId(idUser);
+
         if (listAllFriendsByUserId.isEmpty()) {
             log.debug("Из БД вернулся пустой список друзей пользователя ID={}", idUser);
         } else {
-            log.debug("Из БД успешно получен список друзей пользователя ID={}", idUser);
+            log.debug("Из БД успешно получен список из count={} друзей пользователя ID={}",
+                    listAllFriendsByUserId.size(), idUser);
         }
         return listAllFriendsByUserId;
     }
@@ -127,7 +143,8 @@ public class UserService {
             log.debug("Из БД вернулся пустой список общих друзей пользователя ID={} с пользователем ID={}",
                     idUser, idFriend);
         } else {
-            log.debug("Из БД успешно получен список общих друзей пользователя ID={} и ID={}", idUser, idFriend);
+            log.debug("Из БД успешно получен список из count={} общих друзей пользователя ID={} и ID={}",
+                    listAllCommonFriendsByUserId.size(), idUser, idFriend);
         }
         return listAllCommonFriendsByUserId;
     }
