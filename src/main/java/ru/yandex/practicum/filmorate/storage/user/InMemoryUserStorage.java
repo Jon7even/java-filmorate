@@ -17,7 +17,7 @@ import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGI
 @Slf4j
 @Service
 public class InMemoryUserStorage implements UserStorage {
-    IdGenerator id;
+    private final IdGenerator id;
     private final Map<Integer, User> users;
 
     public InMemoryUserStorage() {
@@ -170,17 +170,9 @@ public class InMemoryUserStorage implements UserStorage {
         log.info("В БД выполняется запрос на получение списка общих друзей пользователей ID={} и ID={}",
                 idUser, idFriend);
 
-        Set<Integer> friendsUser = findUser.getFriends();
-        Set<Integer> friendsUserFriend = findFriend.getFriends();
+        Set<Integer> commonFriends = new HashSet<>(findUser.getFriends());
+        commonFriends.retainAll(findFriend.getFriends());
 
-        Set<Integer> commonFriends = new HashSet<>(); //не смог собрать стрим, потом нужно переделать на стрим
-        for (int id : friendsUser) {
-            for (int id1 : friendsUserFriend) {
-                if (id == id1) {
-                    commonFriends.add(id1);
-                }
-            }
-        }
         if (commonFriends.isEmpty()) {
             log.debug("Список общих друзей пользователя ID={} с пользователем ID={} пуст",
                     idUser, idFriend);

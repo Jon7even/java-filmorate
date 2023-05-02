@@ -53,7 +53,6 @@ public class FilmControllerTest {
     private Film filmDefault1;
     private Film filmDefault2;
     private User userDefault;
-    private User userDefault1;
 
     @BeforeEach
     void setUp() {
@@ -70,8 +69,6 @@ public class FilmControllerTest {
                 LocalDate.of(2007, 7, 1), 300);
         userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
                 LocalDate.of(2000, 1, 1));
-        userDefault1 = new User(1, "yandex1@yandex.ru", "userDefault1", "UserTest1",
-                LocalDate.of(2000, 1, 2));
     }
 
 

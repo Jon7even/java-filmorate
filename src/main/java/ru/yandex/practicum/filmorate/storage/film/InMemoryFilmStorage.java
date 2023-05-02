@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    IdGenerator id;
+    private final IdGenerator id;
     private final Map<Integer, Film> films;
 
     public InMemoryFilmStorage() {

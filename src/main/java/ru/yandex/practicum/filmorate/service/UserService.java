@@ -18,7 +18,7 @@ import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN
 @Slf4j
 @Service
 public class UserService {
-    UserStorage userStorage;
+    private final UserStorage userStorage;
 
     @Autowired
     public UserService(UserStorage userStorage) {
