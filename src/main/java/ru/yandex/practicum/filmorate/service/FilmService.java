@@ -1,61 +1,130 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.NotCreatedException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
 public class FilmService {
-    private final Map<Integer, Film> films = new HashMap<>();
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
-    private static Integer idGenerator = 1;
-
-    private static Integer getIdGenerator() {
-        return idGenerator++;
-    }
-
-    public static void setIdGenerator(Integer idGenerator) {
-        FilmService.idGenerator = idGenerator;
+    @Autowired
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
     }
 
     public List<Film> getAllFilms() {
-        log.info("В БД выполняется запрос на получение всех фильмов");
-        return new ArrayList<>(films.values());
+        log.debug("Сервис выполняет запрос в БД на получение всех фильмов");
+        List<Film> listFilm = filmStorage.getAllFilms();
+        if (listFilm.isEmpty()) {
+            log.debug("Из БД вернулся пустой список фильмов");
+        } else {
+            log.debug("Из БД успешно получен список из count={} фильмов", listFilm.size());
+        }
+        return listFilm;
     }
 
     public Film addFilm(Film film) {
-        film.setId(getIdGenerator());
-        films.put(film.getId(), film);
-        log.info("В БД успешно добавлен новый фильм {}", films.get(film.getId()));
-        return film;
+        log.debug("Сервис выполняет запрос в БД на добавление фильма");
+        Film createdFilm = filmStorage.addFilm(film);
+        if (createdFilm != null) {
+            log.debug("В БД успешно добавлен новый фильм {}", createdFilm.getName());
+        } else {
+            log.error("Ошибка БД! Film is null. По неизвестной причине не получилось добавить новый фильм");
+            throw new NotCreatedException("New film");
+        }
+        return createdFilm;
     }
 
     public Film updateFilm(Film film) {
-        int filmId = film.getId();
-        if (films.containsKey(filmId)) {
-            Film oldFilm = films.get(filmId);
-            films.put(filmId, film);
-            if (film.equals(oldFilm)) {
-                log.warn("При обновлении фильма с ID={} новых данных не было " +
-                        "если это сообщение повторится, на это стоит обратить внимание", filmId);
-            }
-            log.info("Фильм с ID={} успешно обновлен в БД!\n Старый фильм: {},\n Новый фильм: {}",
-                    filmId, oldFilm.toString(), films.get(filmId));
-            return film;
+        filmNotFoundById(film.getId());
+        log.debug("Сервис выполняет запрос в БД на обновление фильма с id={}", film.getId());
+        Film getUpdateFilm = filmStorage.updateFilm(film);
+
+        if (getUpdateFilm != null) {
+            log.debug("В БД успешно обновлен фильм {}", getUpdateFilm.getName());
         } else {
-            throw new ValidationException("Фильма с таким ID=" + filmId + " не существует.");
+            log.error("Ошибка БД! Film is null.");
+            filmNotFoundById(0);
+        }
+        return getUpdateFilm;
+    }
+
+    public Film findFilmById(int id) {
+        filmNotFoundById(id);
+        log.debug("Сервис выполняет запрос в БД на получение фильма ID={}", id);
+        Film getFindFilm = filmStorage.findFilmById(id);
+        if (getFindFilm != null) {
+            log.debug("Из БД успешно получен фильм с ID={}", id);
+        } else {
+            log.error("Ошибка БД! Film is null.");
+            filmNotFoundById(0);
+        }
+        return getFindFilm;
+    }
+
+    public void addLikeByUserId(int idFilm, int userId) {
+        filmNotFoundById(idFilm);
+        userNotFoundById(userId);
+        userStorage.findUserById(userId);
+        log.debug("Сервис выполняет запрос в БД на добавление лайка пользователя ID={} фильму ID={}", userId, idFilm);
+        Film getFilm = filmStorage.addLikeByUserId(idFilm, userId);
+
+        if (getFilm.getLikes().contains(userId)) {
+            log.debug("В БД успешно обновлены данные фильма ID={} пользователь ID={} поставил лайк", userId, idFilm);
+        } else {
+            log.error("Ошибка БД! Film is null.");
+            filmNotFoundById(0);
         }
     }
 
-    public void resetFilmService() {
-        setIdGenerator(1);
-        films.clear();
+    public void removeLikeByUserId(int idFilm, int userId) {
+        filmNotFoundById(idFilm);
+        userNotFoundById(userId);
+        userStorage.findUserById(userId);
+        log.debug("Сервис выполняет запрос в БД на удаление лайка пользователя ID={} у фильма ID={}", userId, idFilm);
+        Film getFilm = filmStorage.removeLikeByUserId(idFilm, userId);
+
+        if (getFilm.getLikes().contains(userId)) {
+            log.error("Ошибка БД! Film is null.");
+            filmNotFoundById(0);
+        } else {
+            log.debug("В БД успешно обновлены данные фильма ID={} пользователь ID={} удалил лайк", userId, idFilm);
+        }
     }
+
+    public List<Film> getPopularFilms(int count) {
+        log.debug("Сервис выполняет запрос в БД на получение count={} популярных фильмов", count);
+        List<Film> listPopularFilms = filmStorage.getPopularFilms(count);
+        if (listPopularFilms.isEmpty()) {
+            log.debug("Из БД вернулся пустой список популярных фильмов");
+        } else {
+            log.debug("Из БД успешно получен список из count={} популярных фильмов. Изначальный запрос был count={}",
+                    listPopularFilms.size(), count);
+        }
+        return listPopularFilms;
+    }
+
+    private void filmNotFoundById(int id) {
+        if (id <= 0) {
+            throw new NotFoundException(String.format("Film with ID=%d", id));
+        }
+    }
+
+    private void userNotFoundById(int id) {
+        if (id <= 0) {
+            throw new NotFoundException(String.format("User with ID=%d", id));
+        }
+    }
+
 }

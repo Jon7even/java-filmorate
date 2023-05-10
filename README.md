@@ -1,2 +1,2 @@
 # java-filmorate
-Template repository for Filmorate project.
+Hi! It's my first backend Spring project on Java - Filmorate.

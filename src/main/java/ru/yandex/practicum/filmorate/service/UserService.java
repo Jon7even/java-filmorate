@@ -1,105 +1,161 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotCreatedException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
-import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
 
 @Slf4j
 @Service
 public class UserService {
-    private final Map<Integer, User> users = new HashMap<>();
-    private static Integer idGenerator = 1;
+    private final UserStorage userStorage;
 
-    public static Integer getIdGenerator() {
-        return idGenerator++;
-    }
-
-    public void setIdGenerator(Integer idGenerator) {
-        UserService.idGenerator = idGenerator;
+    @Autowired
+    public UserService(UserStorage userStorage) {
+        this.userStorage = userStorage;
     }
 
     public List<User> getAllUsers() {
-        log.info("Сделан запрос на получение списка всех пользователей. *Работает фильтр BanListFindLogin.properties");
-        return users.values().stream().filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
-                .collect(Collectors.toList());
+        log.debug("Сервис выполняет запрос в БД на получение списка всех пользователей");
+        List<User> listUser = userStorage.getAllUsers();
+
+        if (listUser.isEmpty()) {
+            log.debug("Из БД вернулся пустой список пользователей");
+        } else {
+            log.debug("Из БД успешно получен список из count={} пользователей", listUser.size());
+        }
+        return listUser;
     }
 
     public User createUser(User user) {
         if (isCheckLoginInBanList(user.getLogin())) {
-            throw new ValidationException("Регистрировать пользователя с таким именем запрещено - " + user.getLogin());
+            throw new ValidationException(Collections.singleton(Map.of("login",
+                    String.format("Регистрировать пользователя с таким именем [%s] запрещено", user.getLogin()))));
         }
-        if (isCheckLoginOnDuplicate(user.getLogin())) {
-            throw new ValidationException("Пользователь с таким же логином уже имеется в системе - " + user.getLogin());
+        log.debug("Сервис выполняет запрос в БД на добавление нового пользователя");
+        User createdUser = userStorage.createUser(user);
+
+        if (createdUser != null) {
+            log.debug("В БД успешно добавлен новый пользователь {}", createdUser.getLogin());
+        } else {
+            log.error("Ошибка БД! User is null.");
+            throw new NotCreatedException("New user");
         }
-        if (isCheckEmailInDateBase(user.getEmail())) {
-            throw new ValidationException("Пользователь с таким email - " + user.getEmail() + " уже существует");
-        }
-        if (isCheckName(user)) {
-            user.setName(user.getLogin());
-        }
-        user.setId(getIdGenerator());
-        users.put(user.getId(), user);
-        log.info("В БД успешно добавлен новый пользователь {}", users.get(user.getId()));
-        return user;
+        return createdUser;
     }
 
     public User updateUser(User user) {
-        int userId = user.getId();
-        if (users.containsKey(userId)) {
-            if (isCheckLoginInBanList(user.getLogin())) {
-                throw new ValidationException("Изменение на такой \"login\" - " + user.getLogin() + " запрещено");
-            }
-            if (isCheckEmailInDateBase(user.getEmail())) {
-                throw new ValidationException("Данный email - " + user.getEmail() + " уже находится в БД");
-            }
-            User oldUser = users.get(userId);
-            if (isCheckName(user)) {
-                user.setName(user.getLogin());
-            }
-            users.put(userId, user);
-            if (user.equals(oldUser)) {
-                log.warn("При обновлении данных аккаунта, пользователь с ID={} не дал новых данных " +
-                        "если это сообщение повторится, на это стоит обратить внимание", userId);
-            }
-            log.info("Пользователь с ID={} успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
-                    userId, oldUser.toString(), users.get(userId));
-            return user;
+        userNotFoundById((user.getId()));
+        if (isCheckLoginInBanList(user.getLogin())) {
+            throw new ValidationException(Collections.singleton(Map.of("login",
+                    String.format("Изменение логина на [%s] запрещено", user.getLogin()))));
+        }
+        log.debug("Сервис выполняет запрос в БД на обновление данных пользователя с id={}", user.getId());
+        User updateUser = userStorage.updateUser(user);
+
+        if (updateUser != null) {
+            log.debug("В БД успешно обновлены данные пользователя {}", updateUser.getLogin());
         } else {
-            throw new ValidationException("Пользователя с таким ID=" + userId + " не существует");
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
+        }
+        return updateUser;
+    }
+
+    public User findUserById(int id) {
+        userNotFoundById(id);
+        log.debug("Сервис выполняет запрос в БД на получение пользователя ID={}", id);
+        User getUser = userStorage.findUserById(id);
+
+        if (getUser != null) {
+            log.debug("Из БД успешно получен пользователь с ID={}", id);
+        } else {
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
+        }
+        return getUser;
+    }
+
+    public void addFriend(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на добавление в друзья пользователя ID={} к пользователю ID={}",
+                idFriend, idUser);
+        User getUser = userStorage.addFriend(idUser, idFriend);
+
+        if (getUser.getFriends().contains(idFriend)) {
+            log.debug("В БД успешно обновлены данные ID={} пользователя: добавлен пользователь ID={} в друзья",
+                    idUser, idFriend);
+        } else {
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
         }
     }
 
-    private Boolean isCheckName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Пользователь не указал имени. Поле \"name\" берется из логина - {}", user.getLogin());
-            return true;
+    public void removeFriend(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на удаление из друзей пользователя ID={} у пользователя ID={}",
+                idFriend, idUser);
+        User getUser = userStorage.removeFriend(idUser, idFriend);
+
+        if (getUser.getFriends().contains(idFriend)) {
+            log.error("Ошибка БД! User is null.");
+            userNotFoundById(0);
+        } else {
+            log.debug("В БД успешно обновлены данные ID={} пользователя: удалён пользователь ID={} из друзей",
+                    idUser, idFriend);
         }
-        return false;
     }
 
-    private Boolean isCheckEmailInDateBase(String emailCheck) {
-        return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(emailCheck));
+    public List<User> getAllFriendsByUserId(int idUser) {
+        userNotFoundById(idUser);
+        log.debug("Сервис выполняет запрос в БД на получение списка друзей пользователя ID={}", idUser);
+        List<User> listAllFriendsByUserId = userStorage.getAllFriendsByUserId(idUser);
+
+        if (listAllFriendsByUserId.isEmpty()) {
+            log.debug("Из БД вернулся пустой список друзей пользователя ID={}", idUser);
+        } else {
+            log.debug("Из БД успешно получен список из count={} друзей пользователя ID={}",
+                    listAllFriendsByUserId.size(), idUser);
+        }
+        return listAllFriendsByUserId;
+    }
+
+    public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
+        userNotFoundById(idUser);
+        userNotFoundById(idFriend);
+        log.debug("Сервис выполняет запрос в БД на получение общего списка друзей пользователя ID={} " +
+                "с пользователем ID={}", idUser, idFriend);
+        List<User> listAllCommonFriendsByUserId = userStorage.getAllCommonFriendsByUserId(idUser, idFriend);
+
+        if (listAllCommonFriendsByUserId.isEmpty()) {
+            log.debug("Из БД вернулся пустой список общих друзей пользователя ID={} с пользователем ID={}",
+                    idUser, idFriend);
+        } else {
+            log.debug("Из БД успешно получен список из count={} общих друзей пользователя ID={} и ID={}",
+                    listAllCommonFriendsByUserId.size(), idUser, idFriend);
+        }
+        return listAllCommonFriendsByUserId;
     }
 
     private Boolean isCheckLoginInBanList(String login) {
         return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
     }
 
-    private Boolean isCheckLoginOnDuplicate(String login) {
-        return users.values().stream().anyMatch(user -> user.getLogin().equalsIgnoreCase(login));
-    }
-
-    public void resetUserService() {
-        setIdGenerator(1);
-        users.clear();
+    private void userNotFoundById(int id) {
+        if (id <= 0) {
+            throw new NotFoundException(String.format("User with ID=%d", id));
+        }
     }
 }

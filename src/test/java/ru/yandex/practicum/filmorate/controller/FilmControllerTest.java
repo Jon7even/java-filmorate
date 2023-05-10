@@ -11,7 +11,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -20,10 +23,11 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
 
@@ -39,23 +43,32 @@ public class FilmControllerTest {
     @Autowired
     private FilmService filmService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private InMemoryFilmStorage filmStorage;
+
     private Validator validator;
     private Film filmDefault1;
     private Film filmDefault2;
+    private User userDefault;
 
     @BeforeEach
     void setUp() {
-        filmService.resetFilmService();
+        filmStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
-        initFilms();
+        initFilmsAndUser();
     }
 
-    void initFilms() {
+    void initFilmsAndUser() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
                 LocalDate.of(1900, 1, 1), 100);
         filmDefault2 = new Film(1, "filmDefault2", "description2",
                 LocalDate.of(2007, 7, 1), 300);
+        userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
+                LocalDate.of(2000, 1, 1));
     }
 
 
@@ -90,6 +103,48 @@ public class FilmControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("description").value("description2"))
                 .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("2007-07-01"))
                 .andExpect(MockMvcResultMatchers.jsonPath("duration").value("300"));
+    }
+
+    @Test
+    @DisplayName("Поиск фильма по ID")
+    void shouldGetFilm_thenById() throws Exception {
+        long idFilm = filmService.addFilm(filmDefault1).getId();
+        mockMvc.perform(get("/films/{id}", idFilm))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(idFilm))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault1"));
+        mockMvc.perform(get("/films/{id}", -1))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/films/{id}", idFilm + 1))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Endpoint like")
+    void shouldAddLike_AndRemoveLike() throws Exception {
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+        int idFilm1 = filmService.addFilm(filmDefault1).getId();
+        int idUser1 = userService.createUser(userDefault).getId();
+
+        mockMvc.perform(put("/films/{id}/like/{userId}", idFilm1, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/{id}", idFilm1))
+                .andExpect(jsonPath("$.likes", hasSize(1)))
+                .andExpect(jsonPath("$.likes[0]", equalTo(idUser1)))
+                .andExpect(jsonPath("$.countLikes", equalTo(idUser1)));
+
+        mockMvc.perform(get("/films/popular", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+
+        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm1, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/{id}", idFilm1))
+                .andExpect(jsonPath("$.likes", hasSize(0)))
+                .andExpect(jsonPath("$.likes", empty()))
+                .andExpect(jsonPath("$.countLikes", equalTo(0)));
     }
 
     @Test

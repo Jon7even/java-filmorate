@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -22,9 +23,11 @@ import java.util.List;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -38,6 +41,10 @@ public class UserControllerTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private InMemoryUserStorage inMemoryUserStorage;
+
     private Validator validator;
     private User userDefault;
     private User userDefault1;
@@ -45,7 +52,7 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userService.resetUserService();
+        inMemoryUserStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initUsers();
@@ -74,6 +81,68 @@ public class UserControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("login").value("userDefault"))
                 .andExpect(MockMvcResultMatchers.jsonPath("name").value("UserTest"))
                 .andExpect(MockMvcResultMatchers.jsonPath("birthday").value("2000-01-01"));
+    }
+
+    @Test
+    @DisplayName("Поиск пользователя по ID")
+    void shouldGetUser_thenById() throws Exception {
+        long idUser = userService.createUser(userDefault).getId();
+        mockMvc.perform(get("/users/{id}", idUser))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(idUser))
+                .andExpect(MockMvcResultMatchers.jsonPath("name").value("UserTest"));
+        mockMvc.perform(get("/users/{id}", -1))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/users/{id}", idUser + 1))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Endpoint friends and common friends")
+    void shouldRun_Friends() throws Exception {
+        long idUser1 = userService.createUser(userDefault).getId();
+        long idUser2 = userService.createUser(userNotName).getId();
+        userDefault1.setLogin("myFriend");
+        userDefault1.setEmail("yandex2@yandex.ru");
+        long idUser3 = userService.createUser(userDefault1).getId();
+
+        mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser1, idUser2))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(2)))
+                .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())));
+
+        mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser3, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id", equalTo(2)))
+                .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())))
+                .andExpect(jsonPath("$[1].id", equalTo(3)))
+                .andExpect(jsonPath("$[1].name", equalTo(userDefault1.getName())));
+
+        mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser2, idUser3))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(1)))
+                .andExpect(jsonPath("$[0].name", equalTo(userDefault.getName())));
     }
 
     @Test
@@ -165,7 +234,8 @@ public class UserControllerTest {
         final ValidationException exceptionSameLoginUser = assertThrows(
                 ValidationException.class,
                 () -> userService.createUser(userNotName));
-        assertEquals("Пользователь с таким же логином уже имеется в системе - userDefault",
+        assertEquals("[Field [login] invalid: [Пользователь с таким логином [userDefault] " +
+                        "уже имеется в системе]]",
                 exceptionSameLoginUser.getMessage());
     }
 
@@ -177,15 +247,9 @@ public class UserControllerTest {
         final ValidationException exceptionSameEmailAddUser = assertThrows(
                 ValidationException.class,
                 () -> userService.createUser(userNotName));
-        assertEquals("Пользователь с таким email - yandex@yandex.ru уже существует",
+        assertEquals("[Field [login] invalid: [Пользователь с таким email [yandex@yandex.ru] " +
+                        "уже имеется в системе]]",
                 exceptionSameEmailAddUser.getMessage());
-        userNotName.setEmail("yandex@yandex.ru");
-        userNotName.setId(1);
-        final ValidationException exceptionSameEmailPutUser = assertThrows(
-                ValidationException.class,
-                () -> userService.updateUser(userNotName));
-        assertEquals("Данный email - yandex@yandex.ru уже находится в БД",
-                exceptionSameEmailPutUser.getMessage());
     }
 
     @Test
@@ -195,7 +259,7 @@ public class UserControllerTest {
         final ValidationException exceptionAddLoginUserAdmin = assertThrows(
                 ValidationException.class,
                 () -> userService.createUser(userDefault));
-        assertEquals("Регистрировать пользователя с таким именем запрещено - admin",
+        assertEquals("[Field [login] invalid: [Регистрировать пользователя с таким именем [admin] запрещено]]",
                 exceptionAddLoginUserAdmin.getMessage());
     }
 
