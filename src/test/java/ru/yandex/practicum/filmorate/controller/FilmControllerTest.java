@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -64,9 +65,9 @@ public class FilmControllerTest {
 
     void initFilmsAndUser() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
-                LocalDate.of(1900, 1, 1), 100);
+                LocalDate.of(1900, 1, 1), 100, "default", "");
         filmDefault2 = new Film(1, "filmDefault2", "description2",
-                LocalDate.of(2007, 7, 1), 300);
+                LocalDate.of(2007, 7, 1), 300, "default", "");
         userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
                 LocalDate.of(2000, 1, 1));
     }
@@ -148,24 +149,24 @@ public class FilmControllerTest {
     }
 
     @Test
-    @DisplayName("Если поле name некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [name] некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithNameIsEmpty() {
         filmDefault1.setName("");
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Name не должно быть пустым")),
-                "Name not be empty");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [name] не должно быть пустым")),
+                "[name] not be empty");
 
         filmDefault2.setName(null);
         violations = validator.validate(filmDefault2);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Name не должно быть пустым")),
-                "Name not be empty");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [name] не должно быть пустым")),
+                "[name] not be empty");
     }
 
 
     @Test
-    @DisplayName("Если поле description некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [description] некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithDescriptionLength200() {
         filmDefault1.setDescription("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
                 "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
@@ -173,8 +174,38 @@ public class FilmControllerTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("размер поля Description находиться в диапазоне от 0 до 200 символов")),
-                "Maximum length of the description is 200 characters");
+                        .equals("Размер поля [description] должен быть в диапазоне от 0 до 200 символов")),
+                "Maximum length of the [description] is 200 characters");
+    }
+
+    @Test
+    @DisplayName("Если поле [genre] некорректно, валидатор должен сработать")
+    void shouldNotCreateFilmWithGenreLength20() {
+        filmDefault1.setGenre("test1test2test3test4t");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("Размер поля [genre] должен быть в диапазоне от 0 до 20 символов")),
+                "Maximum length of the [genre] is 20 characters");
+    }
+
+    @Test
+    @DisplayName("Если поле [rating] некорректно, валидатор должен сработать")
+    void shouldNotCreateFilmWithRatingLength10() {
+        filmDefault1.setRating("test1test2t");
+        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
+        assertEquals(1, violations.size(), "Errors than necessary");
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
+                        .equals("Размер поля [rating] должен быть в диапазоне от 0 до 10 символов")),
+                "Maximum length of the [rating] is 10 characters");
+    }
+
+    @Test
+    @DisplayName("Если поле [rating] не указано, должен быть выставлен максимальный рейтинг NC-17")
+    void shouldBeRatingDefaultWhenEmpty() {
+        filmService.addFilm(filmDefault1);
+        Film getFilm = filmService.findFilmById(1);
+        assertEquals(FilmRating.NC_17.toString(), getFilm.getRating(), "Rating Film don't equals");
     }
 
     @Test
@@ -189,12 +220,13 @@ public class FilmControllerTest {
     }
 
     @Test
-    @DisplayName("Если поле Duration некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [duration] некорректно, валидатор должен сработать")
     void shouldNotCreateFilmWithDurationMinus() {
         filmDefault1.setDuration(-1);
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Duration должно быть положительным")),
-                "Duration of the film should be positive");
+        assertTrue(violations.stream()
+                        .anyMatch(t -> t.getMessage().equals("Поле [duration] должно быть положительным")),
+                "[duration] of the film should be positive");
     }
 }
