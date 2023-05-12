@@ -107,7 +107,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    @DisplayName("Поиск фильма по ID")
+    @DisplayName("Поиск фильма по [ID]")
     void shouldGetFilm_thenById() throws Exception {
         long idFilm = filmService.addFilm(filmDefault1).getId();
         mockMvc.perform(get("/films/{id}", idFilm))
@@ -121,7 +121,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    @DisplayName("Endpoint like")
+    @DisplayName("Endpoint [like]")
     void shouldAddLike_AndRemoveLike() throws Exception {
         mockMvc.perform(get("/films/popular"))
                 .andExpect(status().isOk())
@@ -174,7 +174,7 @@ public class FilmControllerTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Размер поля [description] должен быть в диапазоне от 0 до 200 символов")),
+                        .equals("Длина поля [description] должен быть в диапазоне [от 0 до 200 символов]")),
                 "Maximum length of the [description] is 200 characters");
     }
 
@@ -185,7 +185,7 @@ public class FilmControllerTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Размер поля [genre] должен быть в диапазоне от 0 до 20 символов")),
+                        .equals("Длина поля [genre] должна быть в диапазоне [от 0 до 20 символов]")),
                 "Maximum length of the [genre] is 20 characters");
     }
 
@@ -196,13 +196,13 @@ public class FilmControllerTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Размер поля [rating] должен быть в диапазоне от 0 до 10 символов")),
+                        .equals("Длина поля [rating] должна быть в диапазоне [от 0 до 10 символов]")),
                 "Maximum length of the [rating] is 10 characters");
     }
 
     @Test
-    @DisplayName("Если поле [rating] не указано, должен быть выставлен максимальный рейтинг NC-17")
-    void shouldBeRatingDefaultWhenEmpty() {
+    @DisplayName("Если поле [rating] не указано, должен быть выставлен максимальный рейтинг [NC-17]")
+    void shouldBeRatingSetDefaultWhenFieldEmpty() {
         filmService.addFilm(filmDefault1);
         Film getFilm = filmService.findFilmById(1);
         assertEquals(FilmRating.NC_17.toString(), getFilm.getRating(), "Rating Film don't equals");

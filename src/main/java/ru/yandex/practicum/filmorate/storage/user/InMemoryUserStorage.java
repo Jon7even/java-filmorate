@@ -63,40 +63,40 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User updateUser(User user) {
-        int userId = user.getId();
-        log.debug("В БД выполняется запрос на обновление данных пользователя [ID={}]", userId);
+        int idUser = user.getId();
+        log.debug("В БД выполняется запрос на обновление данных пользователя [ID={}]", idUser);
 
-        if (users.containsKey(userId)) {
+        if (users.containsKey(idUser)) {
             if (isCheckEmailInDateBase(user.getEmail())) {
-                log.warn("Пользователь сменил email [email={}] но он уже есть в БД", user.getEmail());
+                log.warn("Пользователь сменил [email={}] но он уже есть в БД", user.getEmail());
             }
-            User oldUser = users.get(userId);
+            User oldUser = users.get(idUser);
 
             if (isCheckName(user)) {
                 user.setName(user.getLogin());
             }
-            users.put(userId, user);
-            User updateUser = users.get(userId);
+            users.put(idUser, user);
+            User updateUser = users.get(idUser);
 
             if (updateUser.equals(oldUser)) {
                 log.warn("При обновлении данных аккаунта, пользователь с [ID={}] не дал новых данных " +
-                        "если это сообщение повторится, на это стоит обратить внимание", userId);
+                        "если это сообщение повторится, на это стоит обратить внимание", idUser);
             }
 
             log.debug("Пользователь с [ID={}] успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
-                    userId, oldUser, updateUser);
+                    idUser, oldUser, updateUser);
             return updateUser;
         } else {
-            throw new NotFoundException(String.format("User with ID=%d", userId));
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
     }
 
-    public User findUserById(int id) {
-        log.debug("В БД выполняется запрос на получение данных пользователя [ID={}]", id);
-        if (users.containsKey(id)) {
-            return users.get(id);
+    public User findUserById(int idUser) {
+        log.debug("В БД выполняется запрос на получение данных пользователя [ID={}]", idUser);
+        if (users.containsKey(idUser)) {
+            return users.get(idUser);
         } else {
-            throw new NotFoundException(String.format("User with ID=%d", id));
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
     }
 

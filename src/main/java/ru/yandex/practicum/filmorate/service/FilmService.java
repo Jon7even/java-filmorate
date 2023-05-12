@@ -57,7 +57,8 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
-        filmNotFoundById(film.getId());
+        int idFilm = film.getId();
+        filmNotFoundByIdCheckPositive(idFilm);
 
         if (isValidatedCheckGenre(film)) {
             film.setGenre("genreIsNotModerated");
@@ -65,7 +66,7 @@ public class FilmService {
 
         film.setRating(getValidatedFilmRating(film.getRating()));
 
-        log.info("Сервис выполняет запрос в БД на обновление фильма с [ID={}]", film.getId());
+        log.info("Сервис выполняет запрос в БД на обновление фильма с [ID={}]", idFilm);
         Film getUpdateFilm = filmStorage.updateFilm(film);
 
         if (getUpdateFilm != null) {
@@ -73,55 +74,55 @@ public class FilmService {
         } else {
             log.error("Ошибка БД! В сервис из БД вернулся [Film is null]. " +
                     "По неизвестной причине не получилось обновить фильм [name={}]", film.getName());
-            filmNotFoundById(0);
+            filmNotFoundByIdException(idFilm);
         }
         return getUpdateFilm;
     }
 
     public Film findFilmById(int idFilm) {
-        filmNotFoundById(idFilm);
+        filmNotFoundByIdCheckPositive(idFilm);
         log.info("Сервис выполняет запрос в БД на получение фильма [ID={}]", idFilm);
         Film getFindFilm = filmStorage.findFilmById(idFilm);
         if (getFindFilm != null) {
             log.info("В сервис из БД успешно получен фильм с [ID={}]", idFilm);
         } else {
             log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
-            filmNotFoundById(0);
+            filmNotFoundByIdException(idFilm);
         }
         return getFindFilm;
     }
 
-    public void addLikeByUserId(int idFilm, int userId) {
-        filmNotFoundById(idFilm);
-        userNotFoundById(userId);
-        userStorage.findUserById(userId);
+    public void addLikeByUserId(int idFilm, int idUser) {
+        filmNotFoundByIdCheckPositive(idFilm);
+        userNotFoundByIdCheckPositive(idUser);
+        userStorage.findUserById(idUser);
         log.info("Сервис выполняет запрос в БД на добавление лайка пользователя [ID={}] фильму [ID={}]",
-                userId, idFilm);
-        Film getFilm = filmStorage.addLikeByUserId(idFilm, userId);
+                idUser, idFilm);
+        Film getFilm = filmStorage.addLikeByUserId(idFilm, idUser);
 
-        if (getFilm.getLikes().contains(userId)) {
+        if (getFilm.getLikes().contains(idUser)) {
             log.info("В сервис из БД пришли обновленные данные фильма [ID={}] пользователь [ID={}] поставил лайк",
-                    userId, idFilm);
+                    idUser, idFilm);
         } else {
             log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
-            filmNotFoundById(0);
+            filmNotFoundByIdException(idFilm);
         }
     }
 
-    public void removeLikeByUserId(int idFilm, int userId) {
-        filmNotFoundById(idFilm);
-        userNotFoundById(userId);
-        userStorage.findUserById(userId);
+    public void removeLikeByUserId(int idFilm, int idUser) {
+        filmNotFoundByIdCheckPositive(idFilm);
+        userNotFoundByIdCheckPositive(idUser);
+        userStorage.findUserById(idUser);
         log.info("Сервис выполняет запрос в БД на удаление лайка пользователя [ID={}] у фильма [ID={}]",
-                userId, idFilm);
-        Film getFilm = filmStorage.removeLikeByUserId(idFilm, userId);
+                idUser, idFilm);
+        Film getFilm = filmStorage.removeLikeByUserId(idFilm, idUser);
 
-        if (getFilm.getLikes().contains(userId)) {
+        if (getFilm.getLikes().contains(idUser)) {
             log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
-            filmNotFoundById(0);
+            filmNotFoundByIdException(idFilm);
         } else {
             log.info("В сервис из БД успешно пришли обновленные данные фильма " +
-                    "[ID={}] пользователь [ID={}] удалил лайк", userId, idFilm);
+                    "[ID={}] пользователь [ID={}] удалил лайк", idUser, idFilm);
         }
     }
 
@@ -160,15 +161,19 @@ public class FilmService {
         }
     }
 
-    private void filmNotFoundById(int id) {
-        if (id <= 0) {
-            throw new NotFoundException(String.format("Film with ID=%d", id));
+    private void filmNotFoundByIdCheckPositive(int idFilm) {
+        if (idFilm <= 0) {
+            throw new NotFoundException(String.format("Film with ID=%d", idFilm));
         }
     }
 
-    private void userNotFoundById(int id) {
-        if (id <= 0) {
-            throw new NotFoundException(String.format("User with ID=%d", id));
+    private void filmNotFoundByIdException(int idFilm) {
+        throw new NotFoundException(String.format("Film with ID=%d", idFilm));
+    }
+
+    private void userNotFoundByIdCheckPositive(int idUser) {
+        if (idUser <= 0) {
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
     }
 

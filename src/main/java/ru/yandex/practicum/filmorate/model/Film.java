@@ -18,7 +18,7 @@ public class Film {
     @NotBlank(message = "Поле [name] не должно быть пустым")
     private String name;
 
-    @Size(max = 200, message = "Размер поля [description] должен быть в диапазоне от 0 до 200 символов")
+    @Size(max = 200, message = "Длина поля [description] должен быть в диапазоне [от 0 до 200 символов]")
     private String description;
 
     @NotNull
@@ -29,10 +29,10 @@ public class Film {
     @Positive(message = "Поле [duration] должно быть положительным")
     private long duration;
 
-    @Size(max = 20, message = "Размер поля [genre] должен быть в диапазоне от 0 до 20 символов")
+    @Size(max = 20, message = "Длина поля [genre] должна быть в диапазоне [от 0 до 20 символов]")
     private String genre;
 
-    @Size(max = 10, message = "Размер поля [rating] должен быть в диапазоне от 0 до 10 символов")
+    @Size(max = 10, message = "Длина поля [rating] должна быть в диапазоне [от 0 до 10 символов]")
     private String rating;
 
     private Set<Integer> likes;
