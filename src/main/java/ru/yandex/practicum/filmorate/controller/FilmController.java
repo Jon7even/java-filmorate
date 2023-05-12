@@ -45,7 +45,7 @@ public class FilmController {
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public Film getFilm(@PathVariable("id") int id) {
-        log.debug("Клиент сделал Http запрос на получение фильма по ID={}", id);
+        log.debug("Клиент сделал Http запрос на получение фильма по [ID={}]", id);
         return filmService.findFilmById(id);
     }
 
@@ -53,7 +53,7 @@ public class FilmController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable int id,
                         @PathVariable int userId) {
-        log.debug("Клиент с ID={} сделал Http запрос на добавление лайка фильму с ID={}", userId, id);
+        log.debug("Клиент с [ID={}] сделал Http запрос на добавление лайка фильму с [ID={}]", userId, id);
         filmService.addLikeByUserId(id, userId);
     }
 
@@ -61,7 +61,7 @@ public class FilmController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeLike(@PathVariable int id,
                            @PathVariable int userId) {
-        log.debug("Клиент с ID={} сделал Http запрос на удаление лайка у фильма с ID={}", userId, id);
+        log.debug("Клиент с [ID={}] сделал Http запрос на удаление лайка у фильма с [ID={}]", userId, id);
         filmService.removeLikeByUserId(id, userId);
     }
 

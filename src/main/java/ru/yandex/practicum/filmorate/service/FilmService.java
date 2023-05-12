@@ -27,12 +27,12 @@ public class FilmService {
     }
 
     public List<Film> getAllFilms() {
-        log.debug("Сервис выполняет запрос в БД на получение списка всех фильмов");
+        log.info("Сервис выполняет запрос в БД на получение списка всех фильмов");
         List<Film> listFilm = filmStorage.getAllFilms();
         if (listFilm.isEmpty()) {
-            log.debug("В сервис из БД вернулся пустой список фильмов");
+            log.info("В сервис из БД вернулся пустой список фильмов");
         } else {
-            log.debug("В сервис из БД успешно вернулся список из count={} фильмов", listFilm.size());
+            log.info("В сервис из БД успешно вернулся список из [count={}] фильмов", listFilm.size());
         }
         return listFilm;
     }
@@ -41,17 +41,16 @@ public class FilmService {
         if (isValidatedCheckGenre(film)) {
             film.setGenre("genreIsNotModerated");
         }
-
         film.setRating(getValidatedFilmRating(film.getRating()));
 
-        log.debug("Сервис выполняет запрос в БД на добавление нового фильма");
+        log.info("Сервис выполняет запрос в БД на добавление нового фильма");
         Film createdFilm = filmStorage.addFilm(film);
 
         if (createdFilm != null) {
-            log.debug("В сервис из БД успешно вернулся новый фильм {}", createdFilm.getName());
+            log.info("В сервис из БД успешно вернулся новый фильм [name={}]", createdFilm.getName());
         } else {
             log.error("Ошибка БД! В сервис из БД вернулся [Film is null]. " +
-                    "По неизвестной причине не получилось добавить новый фильм");
+                    "По неизвестной причине не получилось добавить новый фильм [name={}]", film.getName());
             throw new NotCreatedException("New film");
         }
         return createdFilm;
@@ -66,14 +65,14 @@ public class FilmService {
 
         film.setRating(getValidatedFilmRating(film.getRating()));
 
-        log.debug("Сервис выполняет запрос в БД на обновление фильма с id={}", film.getId());
+        log.info("Сервис выполняет запрос в БД на обновление фильма с [ID={}]", film.getId());
         Film getUpdateFilm = filmStorage.updateFilm(film);
 
         if (getUpdateFilm != null) {
-            log.debug("В сервис из БД успешно вернулся обновленный фильм {}", getUpdateFilm.getName());
+            log.info("В сервис из БД успешно вернулся обновленный фильм [name={}]", getUpdateFilm.getName());
         } else {
             log.error("Ошибка БД! В сервис из БД вернулся [Film is null]. " +
-                    "По неизвестной причине не получилось обновить фильм");
+                    "По неизвестной причине не получилось обновить фильм [name={}]", film.getName());
             filmNotFoundById(0);
         }
         return getUpdateFilm;
@@ -81,12 +80,12 @@ public class FilmService {
 
     public Film findFilmById(int idFilm) {
         filmNotFoundById(idFilm);
-        log.debug("Сервис выполняет запрос в БД на получение фильма ID={}", idFilm);
+        log.info("Сервис выполняет запрос в БД на получение фильма [ID={}]", idFilm);
         Film getFindFilm = filmStorage.findFilmById(idFilm);
         if (getFindFilm != null) {
-            log.debug("В сервис из БД успешно получен фильм с ID={}", idFilm);
+            log.info("В сервис из БД успешно получен фильм с [ID={}]", idFilm);
         } else {
-            log.error("В сервис из БД вернулся [Film is null] фильма с ID={} не существует", idFilm);
+            log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
             filmNotFoundById(0);
         }
         return getFindFilm;
@@ -96,14 +95,15 @@ public class FilmService {
         filmNotFoundById(idFilm);
         userNotFoundById(userId);
         userStorage.findUserById(userId);
-        log.debug("Сервис выполняет запрос в БД на добавление лайка пользователя ID={} фильму ID={}", userId, idFilm);
+        log.info("Сервис выполняет запрос в БД на добавление лайка пользователя [ID={}] фильму [ID={}]",
+                userId, idFilm);
         Film getFilm = filmStorage.addLikeByUserId(idFilm, userId);
 
         if (getFilm.getLikes().contains(userId)) {
-            log.debug("В сервис из БД пришли обновленные данные фильма ID={} пользователь ID={} поставил лайк",
+            log.info("В сервис из БД пришли обновленные данные фильма [ID={}] пользователь [ID={}] поставил лайк",
                     userId, idFilm);
         } else {
-            log.error("В сервис из БД вернулся [Film is null] фильма с ID={} не существует", idFilm);
+            log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
             filmNotFoundById(0);
         }
     }
@@ -112,26 +112,27 @@ public class FilmService {
         filmNotFoundById(idFilm);
         userNotFoundById(userId);
         userStorage.findUserById(userId);
-        log.debug("Сервис выполняет запрос в БД на удаление лайка пользователя ID={} у фильма ID={}", userId, idFilm);
+        log.info("Сервис выполняет запрос в БД на удаление лайка пользователя [ID={}] у фильма [ID={}]",
+                userId, idFilm);
         Film getFilm = filmStorage.removeLikeByUserId(idFilm, userId);
 
         if (getFilm.getLikes().contains(userId)) {
-            log.error("В сервис из БД вернулся [Film is null] фильма с ID={} не существует", idFilm);
+            log.error("В сервис из БД вернулся [Film is null] фильма с [ID={}] не существует", idFilm);
             filmNotFoundById(0);
         } else {
-            log.debug("В сервис из БД успешно пришли обновленные данные фильма ID={} пользователь ID={} удалил лайк",
-                    userId, idFilm);
+            log.info("В сервис из БД успешно пришли обновленные данные фильма " +
+                    "[ID={}] пользователь [ID={}] удалил лайк", userId, idFilm);
         }
     }
 
     public List<Film> getPopularFilms(int count) {
-        log.debug("Сервис выполняет запрос в БД на получение count={} популярных фильмов", count);
+        log.info("Сервис выполняет запрос в БД на получение [count={}] популярных фильмов", count);
         List<Film> listPopularFilms = filmStorage.getPopularFilms(count);
         if (listPopularFilms.isEmpty()) {
-            log.debug("В сервис из БД вернулся пустой список популярных фильмов");
+            log.info("В сервис из БД вернулся пустой список популярных фильмов");
         } else {
-            log.debug("В сервис из БД успешно вернулся список из count={} популярных фильмов. " +
-                    "Изначальный запрос был count={}", listPopularFilms.size(), count);
+            log.info("В сервис из БД успешно вернулся список из [count={}] популярных фильмов. " +
+                    "Изначальный запрос был [count={}]", listPopularFilms.size(), count);
         }
         return listPopularFilms;
     }
@@ -147,14 +148,14 @@ public class FilmService {
     private String getValidatedFilmRating(String rating) {
         if (rating == null || rating.isBlank()) {
             log.info("Пользователь не указал возрастной рейтинг фильма. " +
-                    "Поле [rating] выставляется по default. На вход было получено {}", rating);
+                    "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
             return NC_17.toString();
         }
         if (FilmRating.checkValidateFilmRating(rating)) {
             return rating.toUpperCase();
         } else {
             log.info("Пользователь неправильно указал возрастной рейтинг фильма. " +
-                    "Поле [rating] выставляется по default. На вход было получено {}", rating);
+                    "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
             return NC_17.toString();
         }
     }
