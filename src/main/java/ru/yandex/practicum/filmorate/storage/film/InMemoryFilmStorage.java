@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.AlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.NotCreatedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -76,6 +77,10 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film addLikeByUserId(int idFilm, int userId) {
         log.debug("В БД выполняется запрос на добавление лайка фильму [ID={}] пользователем [ID={}]", idFilm, userId);
         Film findFilm = findFilmById(idFilm);
+        if (findFilm.getLikes().contains(userId)) {
+            log.error("У фильма [ID={}] уже есть лайк [ID={}]", idFilm, userId);
+            throw new AlreadyExistsException(String.format("Like by user ID=%d", userId));
+        }
         findFilm.addLike(userId);
         updateFilm(findFilm);
         Film addedLikeFilm = findFilmById(idFilm);

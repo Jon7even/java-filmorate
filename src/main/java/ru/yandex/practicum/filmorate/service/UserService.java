@@ -94,7 +94,6 @@ public class UserService {
         userNotFoundByIdCheckPositive(idFriend);
         log.info("Сервис выполняет запрос в БД на добавление в друзья пользователя [ID={}] к пользователю [ID={}]",
                 idFriend, idUser);
-
         User getUser = userStorage.addFriend(idUser, idFriend);
         if (getUser == null) {
             log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idUser);

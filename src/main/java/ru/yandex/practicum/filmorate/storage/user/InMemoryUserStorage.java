@@ -2,10 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotCreatedException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.NotRemovedException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
 
@@ -102,19 +99,18 @@ public class InMemoryUserStorage implements UserStorage {
 
     public User addFriend(int idUser, int idFriend) {
         log.debug("В БД выполняется запрос на добавление друга [ID={}] пользователю [ID={}]", idFriend, idUser);
-        User findUser = findUserById(idUser);
-        findUser.addFriend(idFriend);
-        updateUser(findUser);
+        User getUser = findUserById(idUser);
+        if (getUser.getFriends().contains(idFriend)) {
+            log.error("У пользователя [ID={}] уже есть друг [ID={}]", idUser, idFriend);
+            throw new AlreadyExistsException(String.format("Friend with ID=%d", idFriend));
+        }
+        getUser.addFriend(idFriend);
+        updateUser(getUser);
 
-        User friendUser = findUserById(idFriend);
-        friendUser.addFriend(idUser);
-        updateUser(friendUser);
-
-        User addedFriendUser = findUserById(idUser);
-
-        if (addedFriendUser.getFriends().contains(idFriend)) {
-            log.debug("Пользователю [ID={}] успешно добавлен друг [ID={}]", idUser, idFriend);
-            return addedFriendUser;
+        User addedFriendForUser = findUserById(idUser);
+        if (addedFriendForUser.getFriends().contains(idFriend)) {
+            log.debug("В БД пользователю [ID={}] успешно добавлен друг [ID={}]", idUser, idFriend);
+            return addedFriendForUser;
         } else {
             log.error("Ошибка БД. Пользователю [ID={}] не добавлен друг [ID={}]", idUser, idFriend);
             throw new NotCreatedException(String.format("New friend for user ID=%d", idUser));
@@ -123,45 +119,34 @@ public class InMemoryUserStorage implements UserStorage {
 
     public User removeFriend(int idUser, int idFriend) {
         log.debug("В БД выполняется запрос на удаление друга [ID={}] у пользователя [ID={}]", idFriend, idUser);
-        User findUser = findUserById(idUser);
-        User friendUser = findUserById(idFriend);
+        User getUser = findUserById(idUser);
 
-        if (findUser.getFriends().contains(idFriend)) {
-            findUser.removeFriend(idFriend);
-            updateUser(findUser);
+        if (getUser.getFriends().contains(idFriend)) {
+            getUser.removeFriend(idFriend);
+            updateUser(getUser);
         } else {
             throw new NotFoundException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         }
 
-        if (friendUser.getFriends().contains(idUser)) {
-            friendUser.removeFriend(idUser);
-            updateUser(friendUser);
-        } else {
-            throw new NotFoundException(String.format("Friend ID=%d for user ID=%d", idUser, idFriend));
-        }
-        User removedUser = findUserById(idUser);
+        User removedFriendForUser = findUserById(idUser);
 
-        if (removedUser.getFriends().contains(idFriend)) {
+        if (removedFriendForUser.getFriends().contains(idFriend)) {
             log.error("Ошибка БД. У пользователя [ID={}] не удален друг [ID={}]", idUser, idFriend);
             throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         } else {
-            log.debug("У Пользователя [ID={}] успешно удалён друг [ID={}]", idUser, idFriend);
+            log.debug("В БД у пользователя [ID={}] успешно удалён друг [ID={}]", idUser, idFriend);
+            User friendUser = findUserById(idFriend);
+            if(friendUser.getFriends().contains(idUser)) {
+                log.debug("Но друг [ID={}] еще не удалил пользователя [ID={}]", idFriend, idUser);
+            }
+            return removedFriendForUser;
         }
-
-        if (findUserById(idFriend).getFriends().contains(idUser)) {
-            log.error("Ошибка БД. У пользователя [ID={}] не удален друг [ID={}]", idFriend, idUser);
-            throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idUser, idFriend));
-        } else {
-            log.debug("У Пользователя [ID={}] успешно удалён друг [ID={}]", idFriend, idUser);
-        }
-
-        return removedUser;
     }
 
     public List<User> getAllFriendsByUserId(int idUser) {
-        User findUser = findUserById(idUser);
+        User getUser = findUserById(idUser);
         log.debug("В БД выполняется запрос на получение списка друзей пользователя [ID={}]", idUser);
-        return findUser.getFriends().stream().map(this::findUserById).collect(Collectors.toList());
+        return getUser.getFriends().stream().map(this::findUserById).collect(Collectors.toList());
     }
 
     public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {

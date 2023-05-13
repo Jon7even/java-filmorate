@@ -98,13 +98,12 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Endpoint [friends] and [common friends]")
+    @DisplayName("Endpoint [friends]")
     void shouldRun_Friends() throws Exception {
         long idUser1 = userService.createUser(userDefault).getId();
         long idUser2 = userService.createUser(userNotName).getId();
         userDefault1.setLogin("myFriend");
         userDefault1.setEmail("yandex2@yandex.ru");
-        long idUser3 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser1, idUser2))
                 .andExpect(status().isOk());
@@ -120,16 +119,45 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$[0].id", equalTo(2)))
                 .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())));
 
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(1)))
+                .andExpect(jsonPath("$[0].name", equalTo(userDefault.getName())));
+
         mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser2, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(get("/users/{id}/friends", idUser1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+        mockMvc.perform(get("/users/{id}/friends", idUser2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    @DisplayName("Endpoint [common friends]")
+    void shouldRun_CommonFriends() throws Exception {
+        long idUser1 = userService.createUser(userDefault).getId();
+        long idUser2 = userService.createUser(userNotName).getId();
+        userDefault1.setLogin("myFriend");
+        userDefault1.setEmail("yandex2@yandex.ru");
+        long idUser3 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
         mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser3, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser3))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(get("/users/{id}/friends", idUser1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
