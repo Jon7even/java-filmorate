@@ -84,7 +84,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Поиск пользователя по ID")
+    @DisplayName("Поиск пользователя по [ID]")
     void shouldGetUser_thenById() throws Exception {
         long idUser = userService.createUser(userDefault).getId();
         mockMvc.perform(get("/users/{id}", idUser))
@@ -98,13 +98,12 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Endpoint friends and common friends")
+    @DisplayName("Endpoint [friends]")
     void shouldRun_Friends() throws Exception {
         long idUser1 = userService.createUser(userDefault).getId();
         long idUser2 = userService.createUser(userNotName).getId();
         userDefault1.setLogin("myFriend");
         userDefault1.setEmail("yandex2@yandex.ru");
-        long idUser3 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(get("/users/{id}/friends/common/{otherId}", idUser1, idUser2))
                 .andExpect(status().isOk());
@@ -120,16 +119,45 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$[0].id", equalTo(2)))
                 .andExpect(jsonPath("$[0].name", equalTo(userNotName.getName())));
 
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/users/{id}/friends", idUser2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", equalTo(1)))
+                .andExpect(jsonPath("$[0].name", equalTo(userDefault.getName())));
+
         mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser2, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(get("/users/{id}/friends", idUser1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+        mockMvc.perform(get("/users/{id}/friends", idUser2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    @DisplayName("Endpoint [common friends]")
+    void shouldRun_CommonFriends() throws Exception {
+        long idUser1 = userService.createUser(userDefault).getId();
+        long idUser2 = userService.createUser(userNotName).getId();
+        userDefault1.setLogin("myFriend");
+        userDefault1.setEmail("yandex2@yandex.ru");
+        long idUser3 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser2, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser2))
+                .andExpect(status().isNoContent());
         mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser3, idUser1))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", idUser1, idUser3))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(get("/users/{id}/friends", idUser1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -164,43 +192,43 @@ public class UserControllerTest {
 
 
     @Test
-    @DisplayName("Если поле email некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [email] некорректно, валидатор должен сработать")
     void shouldBeValidationEmail() {
         userDefault.setEmail("yandexyandex.ru");
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Поле Email должно иметь формат адреса электронной почты")),
+                        .equals("Поле [email] должно иметь формат адреса электронной почты")),
                 "Email don't should empty");
 
         userNotName.setEmail("");
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Email не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [email] не должно быть пустым")),
                 "Email should have symbol @");
     }
 
     @Test
-    @DisplayName("Если поле login некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [login] некорректно, валидатор должен сработать")
     void shouldBeValidationLogin() {
         userDefault.setLogin("");
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(2, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Login не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [login] не должно быть пустым")),
                 "Login don't should empty");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Длина поля Login должна находиться в диапазоне от 3 до 20 символов")),
+                        .equals("Длина поля [login] должна находиться в диапазоне [от 3 до 20 символов]")),
                 "login should have 3-20 symbol");
 
         userNotName.setLogin(null);
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле Login не должно быть пустым")),
+        assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [login] не должно быть пустым")),
                 "Login don't be null");
     }
 
     @Test
-    @DisplayName("Если поле name не указано, name должно быть равно login")
+    @DisplayName("Если поле [name] не указано, name должно быть равно [login]")
     void shouldBeValidationName() {
         userDefault.setName(null);
         userService.createUser(userDefault);
@@ -211,23 +239,23 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Если поле birthday некорректно, валидатор должен сработать")
+    @DisplayName("Если поле [birthday] некорректно, валидатор должен сработать")
     void shouldBeValidationBirthday() {
         userDefault.setBirthday(LocalDate.of(2077, 7, 7));
         Set<ConstraintViolation<User>> violations = validator.validate(userDefault);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                .equals("Поле Birthday должно содержать прошедшую дату")), "Birthday can't be later");
+                .equals("Поле [birthday] должно содержать прошедшую дату")), "Birthday can't be later");
 
         userNotName.setBirthday(LocalDate.now());
         violations = validator.validate(userNotName);
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                .equals("Поле Birthday должно содержать прошедшую дату")), "Birthday can't be later");
+                .equals("Поле [birthday] должно содержать прошедшую дату")), "Birthday can't be later");
     }
 
     @Test
-    @DisplayName("Если пользователь с таким login уже есть в базе")
+    @DisplayName("Если пользователь с таким [login] уже есть в базе")
     void shouldThrowExceptionSameLoginUser() {
         userService.createUser(userDefault);
         userNotName.setLogin(userDefault.getLogin());
@@ -240,7 +268,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Если пользователь с таким email уже есть в базе")
+    @DisplayName("Если пользователь с таким [email] уже есть в базе")
     void shouldThrowExceptionSameEmailAddAndPutUser() {
         userService.createUser(userDefault);
         userNotName.setEmail(userDefault.getEmail());

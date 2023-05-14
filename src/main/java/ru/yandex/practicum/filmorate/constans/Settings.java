@@ -36,6 +36,10 @@ public class Settings {
     private Settings() {
     }
 
+    public static final String SERVICE_IN_DB = "Сервис выполняет запрос в БД";
+    public static final String SERVICE_FROM_DB = "В сервис из БД вернулся";
+    public static final String CLIENT_SEND_REQUEST = "Клиент сделал запрос";
+    public static final String DB_RUNNING = "В БД выполняется запрос";
     public static LocalDate SET_MIN_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
     private static final String HOME = System.getProperty("user.dir") + "/src/main/resources/";
     public static List<String> BAN_LIST_ADD_LOGIN;

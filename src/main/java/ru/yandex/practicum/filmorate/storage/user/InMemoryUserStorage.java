@@ -2,10 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotCreatedException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.NotRemovedException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.utils.IdGenerator;
 
@@ -13,6 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.DB_RUNNING;
 
 @Slf4j
 @Service
@@ -26,14 +24,14 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public List<User> getAllUsers() {
-        log.info("В БД выполняется запрос на получение списка всех пользователей. " +
-                "*Работает фильтр BanListFindLogin.properties");
+        log.debug("{} на получение списка всех пользователей. " +
+                "*Работает фильтр BanListFindLogin.properties", DB_RUNNING);
         return users.values().stream().filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
                 .collect(Collectors.toList());
     }
 
     public User createUser(User user) {
-        log.info("В БД выполняется запрос на добавление нового пользователя");
+        log.debug("{} на добавление нового пользователя", DB_RUNNING);
 
         if (isCheckLoginOnDuplicate(user.getLogin())) {
             throw new ValidationException(Collections.singleton(Map.of("login",
@@ -58,123 +56,111 @@ public class InMemoryUserStorage implements UserStorage {
         user.setId(newId);
         users.put(user.getId(), user);
         User createdUser = users.get(user.getId());
-        log.info("В БД добавлен новый пользователь {}", createdUser);
+        log.debug("В БД добавлен новый пользователь {}", createdUser);
         return createdUser;
     }
 
     public User updateUser(User user) {
-        int userId = user.getId();
-        log.info("В БД выполняется запрос на обновление данных пользователя ID={}", userId);
+        int idUser = user.getId();
+        log.debug("{} на обновление данных пользователя [ID={}]", DB_RUNNING, idUser);
 
-        if (users.containsKey(userId)) {
+        if (users.containsKey(idUser)) {
             if (isCheckEmailInDateBase(user.getEmail())) {
-                log.warn("Пользователь сменил email {} но он уже есть в БД", user.getEmail());
+                log.warn("Пользователь сменил [email={}] но он уже есть в БД", user.getEmail());
             }
-            User oldUser = users.get(userId);
+            User oldUser = users.get(idUser);
 
             if (isCheckName(user)) {
                 user.setName(user.getLogin());
             }
-            users.put(userId, user);
-            User updateUser = users.get(userId);
+            users.put(idUser, user);
+            User updateUser = users.get(idUser);
 
             if (updateUser.equals(oldUser)) {
-                log.warn("При обновлении данных аккаунта, пользователь с ID={} не дал новых данных " +
-                        "если это сообщение повторится, на это стоит обратить внимание", userId);
+                log.warn("При обновлении данных аккаунта, пользователь с [ID={}] не дал новых данных " +
+                        "если это сообщение повторится, на это стоит обратить внимание", idUser);
             }
 
-            log.info("Пользователь с ID={} успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
-                    userId, oldUser, updateUser);
+            log.debug("Пользователь с [ID={}] успешно обновлен!\n Старый аккаунт: {},\n Новый аккаунт: {}",
+                    idUser, oldUser, updateUser);
             return updateUser;
         } else {
-            throw new NotFoundException(String.format("User with ID=%d", userId));
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
     }
 
-    public User findUserById(int id) {
-        log.info("В БД выполняется запрос на получение данных пользователя ID={}", id);
-        if (users.containsKey(id)) {
-            return users.get(id);
+    public User findUserById(int idUser) {
+        log.debug("{} на получение данных пользователя [ID={}]", DB_RUNNING, idUser);
+        if (users.containsKey(idUser)) {
+            return users.get(idUser);
         } else {
-            throw new NotFoundException(String.format("User with ID=%d", id));
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
     }
 
     public User addFriend(int idUser, int idFriend) {
-        log.info("В БД выполняется запрос на добавление друга ID={} пользователю ID={}", idFriend, idUser);
-        User findUser = findUserById(idUser);
-        findUser.addFriend(idFriend);
-        updateUser(findUser);
+        log.debug("{} на добавление друга [ID={}] пользователю [ID={}]", DB_RUNNING, idFriend, idUser);
+        User getUser = findUserById(idUser);
+        if (getUser.getFriends().contains(idFriend)) {
+            log.error("У пользователя [ID={}] уже есть друг [ID={}]", idUser, idFriend);
+            throw new AlreadyExistsException(String.format("Friend with ID=%d", idFriend));
+        }
+        getUser.addFriend(idFriend);
+        updateUser(getUser);
 
-        User friendUser = findUserById(idFriend);
-        friendUser.addFriend(idUser);
-        updateUser(friendUser);
-
-        User addedFriendUser = findUserById(idUser);
-
-        if (addedFriendUser.getFriends().contains(idFriend)) {
-            log.info("Пользователю ID={} успешно добавлен друг ID={}", idUser, idFriend);
-            return addedFriendUser;
+        User addedFriendForUser = findUserById(idUser);
+        if (addedFriendForUser.getFriends().contains(idFriend)) {
+            log.debug("В БД пользователю [ID={}] успешно добавлен друг [ID={}]", idUser, idFriend);
+            return addedFriendForUser;
         } else {
-            log.error("Ошибка БД. Пользователю ID={} не добавлен друг ID={}", idUser, idFriend);
+            log.error("Ошибка БД. Пользователю [ID={}] не добавлен друг [ID={}]", idUser, idFriend);
             throw new NotCreatedException(String.format("New friend for user ID=%d", idUser));
         }
     }
 
     public User removeFriend(int idUser, int idFriend) {
-        log.info("В БД выполняется запрос на удаление друга ID={} у пользователя ID={}", idFriend, idUser);
-        User findUser = findUserById(idUser);
-        User friendUser = findUserById(idFriend);
+        log.debug("{} на удаление друга [ID={}] у пользователя [ID={}]", DB_RUNNING, idFriend, idUser);
+        User getUser = findUserById(idUser);
 
-        if (findUser.getFriends().contains(idFriend)) {
-            findUser.removeFriend(idFriend);
-            updateUser(findUser);
+        if (getUser.getFriends().contains(idFriend)) {
+            getUser.removeFriend(idFriend);
+            updateUser(getUser);
         } else {
             throw new NotFoundException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         }
 
-        if (friendUser.getFriends().contains(idUser)) {
-            friendUser.removeFriend(idUser);
-            updateUser(friendUser);
-        } else {
-            throw new NotFoundException(String.format("Friend ID=%d for user ID=%d", idUser, idFriend));
-        }
-        User removedUser = findUserById(idUser);
+        User removedFriendForUser = findUserById(idUser);
 
-        if (removedUser.getFriends().contains(idFriend)) {
-            log.error("Ошибка БД. У пользователя ID={} не удален друг ID={}", idUser, idFriend);
+        if (removedFriendForUser.getFriends().contains(idFriend)) {
+            log.error("Ошибка БД. У пользователя [ID={}] не удален друг [ID={}]", idUser, idFriend);
             throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         } else {
-            log.info("У Пользователя ID={} успешно удалён друг ID={}", idUser, idFriend);
+            log.debug("В БД у пользователя [ID={}] успешно удалён друг [ID={}]", idUser, idFriend);
+            User friendUser = findUserById(idFriend);
+            if (friendUser.getFriends().contains(idUser)) {
+                log.debug("Но друг [ID={}] еще не удалил пользователя [ID={}]", idFriend, idUser);
+            }
+            return removedFriendForUser;
         }
-
-        if (findUserById(idFriend).getFriends().contains(idUser)) {
-            log.error("Ошибка БД. У пользователя ID={} не удален друг ID={}", idFriend, idUser);
-            throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idUser, idFriend));
-        } else {
-            log.info("У Пользователя ID={} успешно удалён друг ID={}", idFriend, idUser);
-        }
-
-        return removedUser;
     }
 
     public List<User> getAllFriendsByUserId(int idUser) {
-        User findUser = findUserById(idUser);
-        log.info("В БД выполняется запрос на получение списка друзей пользователя ID={}", idUser);
-        return findUser.getFriends().stream().map(this::findUserById).collect(Collectors.toList());
+        User getUser = findUserById(idUser);
+        log.debug("{} на получение списка друзей пользователя [ID={}]", DB_RUNNING, idUser);
+        return getUser.getFriends().stream().map(this::findUserById).collect(Collectors.toList());
     }
 
     public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
         User findUser = findUserById(idUser);
         User findFriend = findUserById(idFriend);
-        log.info("В БД выполняется запрос на получение списка общих друзей пользователей ID={} и ID={}",
-                idUser, idFriend);
+        log.debug("{} на получение списка общих друзей пользователей [ID={}] и [ID={}]",
+                DB_RUNNING, idUser, idFriend);
 
         Set<Integer> commonFriends = new HashSet<>(findUser.getFriends());
         commonFriends.retainAll(findFriend.getFriends());
 
         if (commonFriends.isEmpty()) {
-            log.debug("Список общих друзей пользователя ID={} с пользователем ID={} пуст",
+            log.debug("Список общих друзей пользователя [ID={}] с пользователем [ID={}] пуст",
                     idUser, idFriend);
             return Collections.emptyList();
         } else {
@@ -184,7 +170,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     private Boolean isCheckName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Пользователь не указал имени. Поле \"name\" берется из логина - {}", user.getLogin());
+            log.debug("Пользователь не указал имени. Поле [name] берется из логина - [login={}]", user.getLogin());
             return true;
         }
         return false;
