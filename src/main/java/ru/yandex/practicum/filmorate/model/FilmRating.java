@@ -21,7 +21,6 @@ public enum FilmRating {
                 .map(FilmRating::toString)
                 .collect(Collectors.toList()).stream()
                 .anyMatch(rating::equalsIgnoreCase);
-
     }
 
     @Override

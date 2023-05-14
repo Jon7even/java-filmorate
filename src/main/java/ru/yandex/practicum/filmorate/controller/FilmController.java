@@ -8,8 +8,11 @@ import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+
+import static ru.yandex.practicum.filmorate.constans.Settings.CLIENT_SEND_REQUEST;
 
 @RestController
 @RequestMapping("/films")
@@ -23,52 +26,60 @@ public class FilmController {
     }
 
     @GetMapping
-    public List<Film> getAllFilms() {
-        log.debug("Клиент сделал Http запрос на получение списка всех фильмов");
+    public List<Film> getAllFilms(HttpServletRequest request) {
+        log.debug("{} [{}] на получение списка всех фильмов", CLIENT_SEND_REQUEST, request.getMethod());
         return filmService.getAllFilms();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film addFilm(@Valid @RequestBody Film film) {
-        log.debug("Клиент сделал Http запрос на добавление фильма");
+    public Film addFilm(@Valid @RequestBody Film film,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] на добавление фильма", CLIENT_SEND_REQUEST, request.getMethod());
         return filmService.addFilm(film);
     }
 
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
-    public Film updateFilm(@Valid @RequestBody Film film) {
-        log.debug("Клиент сделал Http запрос на обновление фильма");
+    public Film updateFilm(@Valid @RequestBody Film film,
+                           HttpServletRequest request) {
+        log.debug("{} [{}] на обновление фильма", CLIENT_SEND_REQUEST, request.getMethod());
         return filmService.updateFilm(film);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Film getFilm(@PathVariable("id") int id) {
-        log.debug("Клиент сделал Http запрос на получение фильма по [ID={}]", id);
+    public Film getFilm(@PathVariable("id") int id,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] на получение фильма по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
         return filmService.findFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable int id,
-                        @PathVariable int userId) {
-        log.debug("Клиент с [ID={}] сделал Http запрос на добавление лайка фильму с [ID={}]", userId, id);
+                        @PathVariable int userId,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] пользователь с [ID={}] добавляет лайк фильму с [ID={}]",
+                CLIENT_SEND_REQUEST, request.getMethod(), userId, id);
         filmService.addLikeByUserId(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeLike(@PathVariable int id,
-                           @PathVariable int userId) {
-        log.debug("Клиент с [ID={}] сделал Http запрос на удаление лайка у фильма с [ID={}]", userId, id);
+                           @PathVariable int userId,
+                           HttpServletRequest request) {
+        log.debug("{} [{}] пользователь [ID={}] удаляет лайк у фильма с [ID={}]",
+                CLIENT_SEND_REQUEST, request.getMethod(), userId, id);
         filmService.removeLikeByUserId(id, userId);
     }
 
     @GetMapping("/popular")
     @ResponseStatus(HttpStatus.OK)
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
-        log.debug("Клиент сделал Http запрос на получение списка популярных фильмов");
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count,
+                                      HttpServletRequest request) {
+        log.debug("{} [{}] на получение списка популярных фильмов", CLIENT_SEND_REQUEST, request.getMethod());
         if (!(count <= 0)) {
             return filmService.getPopularFilms(count);
         } else {

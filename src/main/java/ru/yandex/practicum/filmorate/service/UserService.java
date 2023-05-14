@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_ADD_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.*;
 
 @Slf4j
 @Service
@@ -25,13 +25,13 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        log.info("Сервис выполняет запрос в БД на получение списка всех пользователей");
+        log.info("{} на получение списка всех пользователей", SERVICE_IN_DB);
         List<User> listUser = userStorage.getAllUsers();
 
         if (listUser.isEmpty()) {
-            log.info("В сервис из БД вернулся пустой список пользователей");
+            log.info("{} пустой список пользователей", SERVICE_FROM_DB);
         } else {
-            log.info("В сервис из БД успешно получен список из [count={}] пользователей", listUser.size());
+            log.info("{} успешно список из [count={}] пользователей", SERVICE_FROM_DB, listUser.size());
         }
         return listUser;
     }
@@ -41,14 +41,14 @@ public class UserService {
             throw new ValidationException(Collections.singleton(Map.of("login",
                     String.format("Регистрировать пользователя с таким именем [%s] запрещено", user.getLogin()))));
         }
-        log.info("Сервис выполняет запрос в БД на добавление нового пользователя");
+        log.info("{} на добавление нового пользователя", SERVICE_IN_DB);
         User createdUser = userStorage.createUser(user);
 
         if (createdUser != null) {
-            log.info("В сервис из БД успешно вернулся новый пользователь [{}]", createdUser.getLogin());
+            log.info("{} успешно новый пользователь [{}]", SERVICE_FROM_DB, createdUser.getLogin());
         } else {
-            log.error("Ошибка БД! В сервис из БД вернулся [User is null]. " +
-                    "По неизвестной причине не получилось нового пользователя");
+            log.error("Ошибка БД! {} [User is null]. " +
+                    "По неизвестной причине не получилось нового пользователя", SERVICE_FROM_DB);
             throw new NotCreatedException("New user");
         }
         return createdUser;
@@ -62,14 +62,15 @@ public class UserService {
             throw new ValidationException(Collections.singleton(Map.of("login",
                     String.format("Изменение логина на [%s] запрещено", user.getLogin()))));
         }
-        log.info("Сервис выполняет запрос в БД на обновление данных пользователя с [ID={}]", idUser);
+        log.info("{} на обновление данных пользователя с [ID={}]", SERVICE_IN_DB, idUser);
         User updateUser = userStorage.updateUser(user);
 
         if (updateUser != null) {
-            log.info("В сервис из БД успешно вернулся обновленный пользователь [login={}]", updateUser.getLogin());
+            log.info("{} успешно обновленный пользователь [login={}]", SERVICE_FROM_DB, updateUser.getLogin());
         } else {
-            log.error("Ошибка БД! В сервис из БД вернулся [User is null]. " +
-                    "По неизвестной причине не получилось обновить данные пользователя [login={}]", user.getLogin());
+            log.error("Ошибка БД! {} [User is null]. " +
+                            "По неизвестной причине не получилось обновить данные пользователя [login={}]",
+                    SERVICE_FROM_DB, user.getLogin());
             userNotFoundByIdException(idUser);
         }
         return updateUser;
@@ -77,13 +78,13 @@ public class UserService {
 
     public User findUserById(int idUser) {
         userNotFoundByIdCheckPositive(idUser);
-        log.info("Сервис выполняет запрос в БД на получение пользователя [ID={}]", idUser);
+        log.info("{} на получение пользователя [ID={}]", SERVICE_IN_DB, idUser);
         User getUser = userStorage.findUserById(idUser);
 
         if (getUser != null) {
-            log.info("Из БД успешно получен пользователь с [ID={}]", idUser);
+            log.info("{} успешно пользователь с [ID={}]", SERVICE_FROM_DB, idUser);
         } else {
-            log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idUser);
+            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idUser);
             userNotFoundByIdException(idUser);
         }
         return getUser;
@@ -92,35 +93,35 @@ public class UserService {
     public void addFriend(Integer idUser, Integer idFriend) {
         userNotFoundByIdCheckPositive(idUser);
         userNotFoundByIdCheckPositive(idFriend);
-        log.info("Сервис выполняет запрос в БД на добавление в друзья пользователя [ID={}] к пользователю [ID={}]",
-                idFriend, idUser);
+        log.info("{} на добавление в друзья пользователя [ID={}] к пользователю [ID={}]",
+                SERVICE_IN_DB, idFriend, idUser);
         User getUser = userStorage.addFriend(idUser, idFriend);
         if (getUser == null) {
-            log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idUser);
+            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idUser);
             userNotFoundByIdException(idUser);
         }
 
         User getFriend = userStorage.findUserById(idFriend);
         if (getFriend == null) {
-            log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idFriend);
+            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idFriend);
             userNotFoundByIdException(idFriend);
         }
 
         Set<Integer> listFriendsUser = getUser.getFriends();
         if (listFriendsUser.isEmpty()) {
-            log.error("В сервис из БД вернулся пользователь [ID={}] но друг [ID={}] не добавлен в поле [friends]",
-                    idUser, idFriend);
+            log.error("{} пользователь [ID={}] но друг [ID={}] не добавлен в поле [friends]",
+                    SERVICE_FROM_DB, idUser, idFriend);
             throw new NotCreatedException(String.format("New friend for user ID=%d", idUser));
         }
 
         if (listFriendsUser.contains(idFriend)) {
-            log.info("В БД успешно обновлены данные [ID={}] пользователя: добавлен пользователь [ID={}] в друзья",
-                    idUser, idFriend);
+            log.info("{} успешно обновленный [ID={}] пользователь: добавлен пользователь [ID={}] в друзья",
+                    SERVICE_FROM_DB, idUser, idFriend);
             String statusFriendship = getStatusFriendship(idUser, listFriendsUser, idFriend, getFriend.getFriends());
             log.info("Текущий статус дружбы: {}", statusFriendship);
         } else {
-            log.error("В сервис из БД вернулся пользователь [ID={}] но друг [ID={}] не найден в поле [friends]",
-                    idUser, idFriend);
+            log.error("{} пользователь [ID={}] но друг [ID={}] не найден в поле [friends]",
+                    SERVICE_FROM_DB, idUser, idFriend);
             throw new NotCreatedException(String.format("New friend for user ID=%d", idUser));
         }
     }
@@ -128,29 +129,29 @@ public class UserService {
     public void removeFriend(int idUser, int idFriend) {
         userNotFoundByIdCheckPositive(idUser);
         userNotFoundByIdCheckPositive(idFriend);
-        log.info("Сервис выполняет запрос в БД на удаление из друзей пользователя [ID={}] у пользователя [ID={}]",
-                idFriend, idUser);
+        log.info("{} на удаление из друзей пользователя [ID={}] у пользователя [ID={}]",
+                SERVICE_IN_DB, idFriend, idUser);
 
         User getUser = userStorage.removeFriend(idUser, idFriend);
         if (getUser == null) {
-            log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idUser);
+            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idUser);
             userNotFoundByIdException(idUser);
         }
 
         User getFriend = userStorage.findUserById(idFriend);
         if (getFriend == null) {
-            log.error("В сервис из БД вернулся [User is null] пользователя с [ID={}] не существует", idFriend);
+            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idFriend);
             userNotFoundByIdException(idFriend);
         }
         Set<Integer> listFriendsUser = getUser.getFriends();
 
         if (listFriendsUser.contains(idFriend)) {
-            log.error("В сервис из БД вернулся пользователь [ID={}] но друг [ID={}] не был удален в поле [friends]",
-                    idUser, idFriend);
+            log.error("{} пользователь [ID={}] но друг [ID={}] не был удален в поле [friends]",
+                    SERVICE_FROM_DB, idUser, idFriend);
             throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
         } else {
-            log.info("В сервис из БД успешно пришли обновленные данные [ID={}] пользователя: " +
-                    "удалён пользователь [ID={}] из друзей", idUser, idFriend);
+            log.info("{} успешно обновленный [ID={}] пользователь: " +
+                    "удалён пользователь [ID={}] из друзей", SERVICE_FROM_DB, idUser, idFriend);
             String statusFriendship = getStatusFriendship(idUser, listFriendsUser, idFriend, getFriend.getFriends());
             log.info("Текущий статус дружбы: {}", statusFriendship);
         }
@@ -158,14 +159,14 @@ public class UserService {
 
     public List<User> getAllFriendsByUserId(int idUser) {
         userNotFoundByIdCheckPositive(idUser);
-        log.info("Сервис выполняет запрос в БД на получение списка друзей пользователя [ID={}]", idUser);
+        log.info("{} на получение списка друзей пользователя [ID={}]", SERVICE_IN_DB, idUser);
         List<User> listAllFriendsByUserId = userStorage.getAllFriendsByUserId(idUser);
 
         if (listAllFriendsByUserId.isEmpty()) {
-            log.info("В сервис из БД вернулся пустой список друзей пользователя [ID={}]", idUser);
+            log.info("{} пустой список друзей пользователя [ID={}]", SERVICE_FROM_DB, idUser);
         } else {
-            log.info("В сервис из БД успешно вернулся список из [count={}] друзей пользователя [ID={}]",
-                    listAllFriendsByUserId.size(), idUser);
+            log.info("{} успешно список из [count={}] друзей пользователя [ID={}]",
+                    SERVICE_FROM_DB, listAllFriendsByUserId.size(), idUser);
         }
         return listAllFriendsByUserId;
     }
@@ -173,16 +174,16 @@ public class UserService {
     public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
         userNotFoundByIdCheckPositive(idUser);
         userNotFoundByIdCheckPositive(idFriend);
-        log.info("Сервис выполняет запрос в БД на получение общего списка друзей пользователя [ID={}] " +
-                "с пользователем [ID={}]", idUser, idFriend);
+        log.info("{} на получение общего списка друзей пользователя [ID={}] " +
+                "с пользователем [ID={}]", SERVICE_IN_DB, idUser, idFriend);
         List<User> listAllCommonFriendsByUserId = userStorage.getAllCommonFriendsByUserId(idUser, idFriend);
 
         if (listAllCommonFriendsByUserId.isEmpty()) {
-            log.info("В сервис из БД вернулся пустой список общих друзей пользователя [ID={}] с пользователем [ID={}]",
-                    idUser, idFriend);
+            log.info("{} пустой список общих друзей пользователя [ID={}] с пользователем [ID={}]",
+                    SERVICE_FROM_DB, idUser, idFriend);
         } else {
-            log.info("В сервис из БД успешно получен список из [count={}] общих друзей пользователя [ID={}] и [ID={}]",
-                    listAllCommonFriendsByUserId.size(), idUser, idFriend);
+            log.info("{} успешно список из [count={}] общих друзей пользователя [ID={}] и [ID={}]",
+                    SERVICE_FROM_DB, listAllCommonFriendsByUserId.size(), idUser, idFriend);
         }
         return listAllCommonFriendsByUserId;
     }

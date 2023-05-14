@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
+import static ru.yandex.practicum.filmorate.constans.Settings.DB_RUNNING;
 
 @Slf4j
 @Service
@@ -23,14 +24,14 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public List<User> getAllUsers() {
-        log.debug("В БД выполняется запрос на получение списка всех пользователей. " +
-                "*Работает фильтр BanListFindLogin.properties");
+        log.debug("{} на получение списка всех пользователей. " +
+                "*Работает фильтр BanListFindLogin.properties", DB_RUNNING);
         return users.values().stream().filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
                 .collect(Collectors.toList());
     }
 
     public User createUser(User user) {
-        log.debug("В БД выполняется запрос на добавление нового пользователя");
+        log.debug("{} на добавление нового пользователя", DB_RUNNING);
 
         if (isCheckLoginOnDuplicate(user.getLogin())) {
             throw new ValidationException(Collections.singleton(Map.of("login",
@@ -61,7 +62,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     public User updateUser(User user) {
         int idUser = user.getId();
-        log.debug("В БД выполняется запрос на обновление данных пользователя [ID={}]", idUser);
+        log.debug("{} на обновление данных пользователя [ID={}]", DB_RUNNING, idUser);
 
         if (users.containsKey(idUser)) {
             if (isCheckEmailInDateBase(user.getEmail())) {
@@ -89,7 +90,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User findUserById(int idUser) {
-        log.debug("В БД выполняется запрос на получение данных пользователя [ID={}]", idUser);
+        log.debug("{} на получение данных пользователя [ID={}]", DB_RUNNING, idUser);
         if (users.containsKey(idUser)) {
             return users.get(idUser);
         } else {
@@ -98,7 +99,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User addFriend(int idUser, int idFriend) {
-        log.debug("В БД выполняется запрос на добавление друга [ID={}] пользователю [ID={}]", idFriend, idUser);
+        log.debug("{} на добавление друга [ID={}] пользователю [ID={}]", DB_RUNNING, idFriend, idUser);
         User getUser = findUserById(idUser);
         if (getUser.getFriends().contains(idFriend)) {
             log.error("У пользователя [ID={}] уже есть друг [ID={}]", idUser, idFriend);
@@ -118,7 +119,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User removeFriend(int idUser, int idFriend) {
-        log.debug("В БД выполняется запрос на удаление друга [ID={}] у пользователя [ID={}]", idFriend, idUser);
+        log.debug("{} на удаление друга [ID={}] у пользователя [ID={}]", DB_RUNNING, idFriend, idUser);
         User getUser = findUserById(idUser);
 
         if (getUser.getFriends().contains(idFriend)) {
@@ -136,7 +137,7 @@ public class InMemoryUserStorage implements UserStorage {
         } else {
             log.debug("В БД у пользователя [ID={}] успешно удалён друг [ID={}]", idUser, idFriend);
             User friendUser = findUserById(idFriend);
-            if(friendUser.getFriends().contains(idUser)) {
+            if (friendUser.getFriends().contains(idUser)) {
                 log.debug("Но друг [ID={}] еще не удалил пользователя [ID={}]", idFriend, idUser);
             }
             return removedFriendForUser;
@@ -145,15 +146,15 @@ public class InMemoryUserStorage implements UserStorage {
 
     public List<User> getAllFriendsByUserId(int idUser) {
         User getUser = findUserById(idUser);
-        log.debug("В БД выполняется запрос на получение списка друзей пользователя [ID={}]", idUser);
+        log.debug("{} на получение списка друзей пользователя [ID={}]", DB_RUNNING, idUser);
         return getUser.getFriends().stream().map(this::findUserById).collect(Collectors.toList());
     }
 
     public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
         User findUser = findUserById(idUser);
         User findFriend = findUserById(idFriend);
-        log.debug("В БД выполняется запрос на получение списка общих друзей пользователей [ID={}] и [ID={}]",
-                idUser, idFriend);
+        log.debug("{} на получение списка общих друзей пользователей [ID={}] и [ID={}]",
+                DB_RUNNING, idUser, idFriend);
 
         Set<Integer> commonFriends = new HashSet<>(findUser.getFriends());
         commonFriends.retainAll(findFriend.getFriends());

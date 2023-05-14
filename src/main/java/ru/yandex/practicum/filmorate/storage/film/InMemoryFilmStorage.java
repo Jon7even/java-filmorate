@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.utils.IdGenerator;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ru.yandex.practicum.filmorate.constans.Settings.DB_RUNNING;
+
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
@@ -23,12 +25,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public List<Film> getAllFilms() {
-        log.debug("В БД выполняется запрос на получение списка всех фильмов");
+        log.debug("{} на получение списка всех фильмов", DB_RUNNING);
         return new ArrayList<>(films.values());
     }
 
     public Film addFilm(Film film) {
-        log.debug("В БД выполняется запрос на добавление нового фильма");
+        log.debug("{} на добавление нового фильма", DB_RUNNING);
         int newId = id.getIdGenerator();
 
         if (newId <= 0) {
@@ -44,6 +46,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film updateFilm(Film film) {
+        log.debug("{} на обновление фильма с [ID={}]", DB_RUNNING, id);
         int filmId = film.getId();
 
         if (films.containsKey(filmId)) {
@@ -66,7 +69,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film findFilmById(int id) {
-        log.debug("В БД выполняется запрос на получение фильма с [ID={}]", id);
+        log.debug("{} на получение фильма с [ID={}]", DB_RUNNING, id);
         if (films.containsKey(id)) {
             return films.get(id);
         } else {
@@ -75,7 +78,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film addLikeByUserId(int idFilm, int userId) {
-        log.debug("В БД выполняется запрос на добавление лайка фильму [ID={}] пользователем [ID={}]", idFilm, userId);
+        log.debug("{} на добавление лайка фильму [ID={}] пользователем [ID={}]", DB_RUNNING, idFilm, userId);
         Film findFilm = findFilmById(idFilm);
         if (findFilm.getLikes().contains(userId)) {
             log.error("У фильма [ID={}] уже есть лайк [ID={}]", idFilm, userId);
@@ -95,7 +98,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film removeLikeByUserId(int idFilm, int userId) {
-        log.debug("В БД выполняется запрос на удаление лайка фильму [ID={}] пользователем [ID={}]", idFilm, userId);
+        log.debug("{} на удаление лайка фильму [ID={}] пользователем [ID={}]", DB_RUNNING, idFilm, userId);
         Film findFilm = findFilmById(idFilm);
 
         if (findFilm.getLikes().contains(userId)) {
@@ -116,7 +119,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public List<Film> getPopularFilms(int count) {
-        log.debug("В БД выполняется запрос на получение списка [count={}] популярных фильмов", count);
+        log.debug("{} на получение списка [count={}] популярных фильмов", DB_RUNNING, count);
         return films.values().stream()
                 .sorted(Comparator.comparingInt(Film::getCountLikes)
                         .reversed())
