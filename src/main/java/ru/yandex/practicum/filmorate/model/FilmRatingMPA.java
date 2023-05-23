@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public enum FilmRating {
+public enum FilmRatingMPA {
     G("G"),
     PG("PG"),
     PG_13("PG-13"),
@@ -12,13 +12,13 @@ public enum FilmRating {
 
     private final String value;
 
-    FilmRating(String value) {
+    FilmRatingMPA(String value) {
         this.value = value;
     }
 
     public static Boolean checkValidateFilmRating(String rating) {
-        return Stream.of(FilmRating.values())
-                .map(FilmRating::toString)
+        return Stream.of(FilmRatingMPA.values())
+                .map(FilmRatingMPA::toString)
                 .collect(Collectors.toList()).stream()
                 .anyMatch(rating::equalsIgnoreCase);
     }

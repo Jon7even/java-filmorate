@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRating;
+import ru.yandex.practicum.filmorate.model.FilmRatingMPA;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -205,7 +205,7 @@ public class FilmControllerTest {
     void shouldBeRatingSetDefaultWhenFieldEmpty() {
         filmService.addFilm(filmDefault1);
         Film getFilm = filmService.findFilmById(1);
-        assertEquals(FilmRating.NC_17.toString(), getFilm.getRating(), "Rating Film don't equals");
+        assertEquals(FilmRatingMPA.NC_17.toString(), getFilm.getRating(), "Rating Film don't equals");
     }
 
     @Test
