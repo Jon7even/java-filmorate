@@ -24,13 +24,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllUsers(HttpServletRequest request) {
-        log.debug("{} [{}] на получение списка всех пользователей", CLIENT_SEND_REQUEST, request.getMethod());
-        return userService.getAllUsers();
-    }
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@Valid @RequestBody User user,
@@ -39,6 +32,23 @@ public class UserController {
         return userService.createUser(user);
     }
 
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public User getUser(@PathVariable Integer id,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] на получение пользователя по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
+        return userService.findUserById(id);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<User> getAllUsers(HttpServletRequest request) {
+        log.debug("{} [{}] на получение списка всех пользователей", CLIENT_SEND_REQUEST, request.getMethod());
+        return userService.getAllUsers();
+    }
+/*
+
+
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public User updateUser(@Valid @RequestBody User user,
@@ -46,14 +56,6 @@ public class UserController {
         log.debug("{} [{}] на обновление пользователя с [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), user.getId());
         return userService.updateUser(user);
-    }
-
-    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public User getUser(@PathVariable int id,
-                        HttpServletRequest request) {
-        log.debug("{} [{}] на получение пользователя по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
-        return userService.findUserById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -93,6 +95,6 @@ public class UserController {
         log.debug("{} [{}] на получение списка общих друзей пользователей [ID={}] и [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, otherId);
         return userService.getAllCommonFriendsByUserId(id, otherId);
-    }
+    }*/
 
 }

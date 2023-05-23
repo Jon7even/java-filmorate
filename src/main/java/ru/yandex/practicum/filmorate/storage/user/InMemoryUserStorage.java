@@ -14,7 +14,7 @@ import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_FIND_
 
 @Slf4j
 @Service
-public class InMemoryUserStorage implements UserStorage {
+public class InMemoryUserStorage  {
     private final IdGenerator id;
     private final Map<Integer, User> users;
 
@@ -30,35 +30,7 @@ public class InMemoryUserStorage implements UserStorage {
                 .collect(Collectors.toList());
     }
 
-    public User createUser(User user) {
-        log.debug("{} на добавление нового пользователя", DB_RUNNING);
 
-        if (isCheckLoginOnDuplicate(user.getLogin())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Пользователь с таким логином [%s] уже имеется в системе", user.getLogin()))));
-        }
-
-        if (isCheckEmailInDateBase(user.getEmail())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Пользователь с таким email [%s] уже имеется в системе", user.getEmail()))));
-        }
-
-        if (isCheckName(user)) {
-            user.setName(user.getLogin());
-        }
-        int newId = id.getIdGenerator();
-
-        if (newId <= 0) {
-            log.error("Неизвестная ошибка генерации ID.");
-            throw new NotCreatedException("New user");
-        }
-
-        user.setId(newId);
-        users.put(user.getId(), user);
-        User createdUser = users.get(user.getId());
-        log.debug("В БД добавлен новый пользователь {}", createdUser);
-        return createdUser;
-    }
 
     public User updateUser(User user) {
         int idUser = user.getId();
@@ -167,6 +139,15 @@ public class InMemoryUserStorage implements UserStorage {
             return commonFriends.stream().map(this::findUserById).collect(Collectors.toList());
         }
     }
+
+
+
+
+
+
+
+
+
 
     private Boolean isCheckName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {

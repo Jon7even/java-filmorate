@@ -98,7 +98,7 @@ public class FilmServiceImpl implements FilmService {
     public void addLikeByUserId(int idFilm, int idUser) {
         filmNotFoundByIdCheckPositive(idFilm);
         userNotFoundByIdCheckPositive(idUser);
-        userStorage.findUserById(idUser);
+        //userStorage.findUserById(idUser);
         log.info("{} на добавление лайка пользователя [ID={}] фильму [ID={}]",
                 SERVICE_IN_DB, idUser, idFilm);
         Film getFilm = filmStorage.addLikeByUserId(idFilm, idUser);
@@ -115,7 +115,7 @@ public class FilmServiceImpl implements FilmService {
     public void removeLikeByUserId(int idFilm, int idUser) {
         filmNotFoundByIdCheckPositive(idFilm);
         userNotFoundByIdCheckPositive(idUser);
-        userStorage.findUserById(idUser);
+        //userStorage.findUserById(idUser);
         log.info("{} на удаление лайка пользователя [ID={}] у фильма [ID={}]",
                 SERVICE_IN_DB, idUser, idFilm);
         Film getFilm = filmStorage.removeLikeByUserId(idFilm, idUser);

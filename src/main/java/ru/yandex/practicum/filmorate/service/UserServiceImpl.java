@@ -7,10 +7,7 @@ import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_FROM_DB;
 import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_IN_DB;
@@ -26,8 +23,44 @@ public class UserServiceImpl implements UserService {
         this.userStorage = userStorage;
     }
 
+    public User createUser(User user) {
+        if (isCheckLoginInBanList(user.getLogin())) {
+            throw new ValidationException(Collections.singleton(Map.of("login",
+                    String.format("Регистрировать пользователя с таким именем [%s] запрещено", user.getLogin()))));
+        }
+        if (isCheckName(user)) {
+            user.setName(user.getLogin());
+        }
+        log.debug("{} на добавление нового пользователя", SERVICE_IN_DB);
+
+        Optional<User> createdUser = userStorage.createUser(user);
+
+        if (createdUser.isPresent()) {
+            log.info("{} успешно новый пользователь [{}]", SERVICE_FROM_DB, createdUser.get().getLogin());
+        } else {
+            log.error("Ошибка БД! {} [User is null]. " +
+                    "По неизвестной причине не получилось нового пользователя", SERVICE_FROM_DB);
+            throw new NotCreatedException("New user");
+        }
+        return createdUser.get();
+    }
+
+    public User findUserById(Integer idUser) {
+        userNotFoundByIdCheckPositive(idUser);
+        log.debug("{} на получение пользователя [ID={}]", SERVICE_IN_DB, idUser);
+        Optional<User> getUser = userStorage.findUserById(idUser);
+
+        if (getUser.isPresent()) {
+            log.info("{} успешно пользователь с [ID={}]", SERVICE_FROM_DB, idUser);
+        } else {
+            log.error("{} [User is empty] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idUser);
+            userNotFoundByIdException(idUser);
+        }
+        return getUser.get();
+    }
+
     public List<User> getAllUsers() {
-        log.info("{} на получение списка всех пользователей", SERVICE_IN_DB);
+        log.debug("{} на получение списка всех пользователей", SERVICE_IN_DB);
         List<User> listUser = userStorage.getAllUsers();
 
         if (listUser.isEmpty()) {
@@ -38,23 +71,29 @@ public class UserServiceImpl implements UserService {
         return listUser;
     }
 
-    public User createUser(User user) {
-        if (isCheckLoginInBanList(user.getLogin())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Регистрировать пользователя с таким именем [%s] запрещено", user.getLogin()))));
-        }
-        log.info("{} на добавление нового пользователя", SERVICE_IN_DB);
-        User createdUser = userStorage.createUser(user);
-
-        if (createdUser != null) {
-            log.info("{} успешно новый пользователь [{}]", SERVICE_FROM_DB, createdUser.getLogin());
-        } else {
-            log.error("Ошибка БД! {} [User is null]. " +
-                    "По неизвестной причине не получилось нового пользователя", SERVICE_FROM_DB);
-            throw new NotCreatedException("New user");
-        }
-        return createdUser;
+    private Boolean isCheckLoginInBanList(String login) {
+        return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
     }
+
+    private void userNotFoundByIdCheckPositive(int idUser) {
+        if (idUser <= 0) {
+            throw new NotFoundException(String.format("User with ID=%d", idUser));
+        }
+    }
+
+    private void userNotFoundByIdException(int idUser) {
+        throw new NotFoundException(String.format("User with ID=%d", idUser));
+    }
+
+
+
+
+
+
+
+
+/*
+
 
     public User updateUser(User user) {
         int idUser = user.getId();
@@ -63,6 +102,9 @@ public class UserServiceImpl implements UserService {
         if (isCheckLoginInBanList(user.getLogin())) {
             throw new ValidationException(Collections.singleton(Map.of("login",
                     String.format("Изменение логина на [%s] запрещено", user.getLogin()))));
+        }
+        if (isCheckName(user)) {
+            user.setName(user.getLogin());
         }
         log.info("{} на обновление данных пользователя с [ID={}]", SERVICE_IN_DB, idUser);
         User updateUser = userStorage.updateUser(user);
@@ -76,20 +118,6 @@ public class UserServiceImpl implements UserService {
             userNotFoundByIdException(idUser);
         }
         return updateUser;
-    }
-
-    public User findUserById(int idUser) {
-        userNotFoundByIdCheckPositive(idUser);
-        log.info("{} на получение пользователя [ID={}]", SERVICE_IN_DB, idUser);
-        User getUser = userStorage.findUserById(idUser);
-
-        if (getUser != null) {
-            log.info("{} успешно пользователь с [ID={}]", SERVICE_FROM_DB, idUser);
-        } else {
-            log.error("{} [User is null] пользователя с [ID={}] не существует", SERVICE_FROM_DB, idUser);
-            userNotFoundByIdException(idUser);
-        }
-        return getUser;
     }
 
     public void addFriend(Integer idUser, Integer idFriend) {
@@ -206,19 +234,13 @@ public class UserServiceImpl implements UserService {
         } else {
             throw new UnknownException("Status Friendship");
         }
-    }
+    }*/
 
-    private Boolean isCheckLoginInBanList(String login) {
-        return BAN_LIST_ADD_LOGIN.stream().anyMatch(login::equalsIgnoreCase);
-    }
-
-    private void userNotFoundByIdCheckPositive(int idUser) {
-        if (idUser <= 0) {
-            throw new NotFoundException(String.format("User with ID=%d", idUser));
+    private Boolean isCheckName(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            log.debug("Пользователь не указал имени. Поле [name] берется из логина - [login={}]", user.getLogin());
+            return true;
         }
-    }
-
-    private void userNotFoundByIdException(int idUser) {
-        throw new NotFoundException(String.format("User with ID=%d", idUser));
+        return false;
     }
 }

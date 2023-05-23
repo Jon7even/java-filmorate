@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -43,7 +43,7 @@ public class UserControllerTest {
     private UserService userService;
 
     @Autowired
-    private InMemoryUserStorage inMemoryUserStorage;
+    private UserStorage userStorage;
 
     private Validator validator;
     private User userDefault;
@@ -52,7 +52,7 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        inMemoryUserStorage.clearRepository();
+        //userStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initUsers();
