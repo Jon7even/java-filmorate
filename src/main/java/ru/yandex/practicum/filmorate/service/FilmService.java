@@ -12,8 +12,8 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.SERVICE_FROM_DB;
-import static ru.yandex.practicum.filmorate.constans.Settings.SERVICE_IN_DB;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_FROM_DB;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_IN_DB;
 import static ru.yandex.practicum.filmorate.model.FilmRating.NC_17;
 
 @Slf4j
@@ -52,7 +52,7 @@ public class FilmService {
             log.info("{} успешно вернулся новый фильм [name={}]", SERVICE_FROM_DB, createdFilm.getName());
         } else {
             log.error("Ошибка БД! {} [Film is null]. " +
-                    "По неизвестной причине не получилось добавить новый фильм [name={}]", 
+                            "По неизвестной причине не получилось добавить новый фильм [name={}]",
                     SERVICE_FROM_DB, film.getName());
             throw new NotCreatedException("New film");
         }

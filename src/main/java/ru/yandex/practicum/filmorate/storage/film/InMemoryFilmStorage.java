@@ -11,7 +11,7 @@ import ru.yandex.practicum.filmorate.utils.IdGenerator;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.DB_RUNNING;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.DB_RUNNING;
 
 @Slf4j
 @Component

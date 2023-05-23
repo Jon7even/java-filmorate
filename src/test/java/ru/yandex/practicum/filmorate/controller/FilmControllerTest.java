@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
+import static ru.yandex.practicum.filmorate.utils.MinDateFilms.SET_MIN_DATE;
 
 @SpringBootTest
 @AutoConfigureMockMvc

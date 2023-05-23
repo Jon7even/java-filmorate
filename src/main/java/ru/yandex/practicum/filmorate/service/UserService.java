@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.*;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_FROM_DB;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_IN_DB;
+import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_ADD_LOGIN;
 
 @Slf4j
 @Service

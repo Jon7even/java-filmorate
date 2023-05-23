@@ -9,8 +9,8 @@ import ru.yandex.practicum.filmorate.utils.IdGenerator;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.BAN_LIST_FIND_LOGIN;
-import static ru.yandex.practicum.filmorate.constans.Settings.DB_RUNNING;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.DB_RUNNING;
+import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_FIND_LOGIN;
 
 @Slf4j
 @Service

@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.CLIENT_SEND_REQUEST;
+import static ru.yandex.practicum.filmorate.constans.NameLogs.CLIENT_SEND_REQUEST;
 
 @RestController
 @RequestMapping("/users")
