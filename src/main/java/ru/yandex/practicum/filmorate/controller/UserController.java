@@ -24,12 +24,11 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody User user,
-                           HttpServletRequest request) {
-        log.debug("{} [{}] на добавление нового пользователя", CLIENT_SEND_REQUEST, request.getMethod());
-        return userService.createUser(user);
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<User> getAllUsers(HttpServletRequest request) {
+        log.debug("{} [{}] на получение списка всех пользователей", CLIENT_SEND_REQUEST, request.getMethod());
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
@@ -40,15 +39,6 @@ public class UserController {
         return userService.findUserById(id);
     }
 
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllUsers(HttpServletRequest request) {
-        log.debug("{} [{}] на получение списка всех пользователей", CLIENT_SEND_REQUEST, request.getMethod());
-        return userService.getAllUsers();
-    }
-/*
-
-
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public User updateUser(@Valid @RequestBody User user,
@@ -58,10 +48,18 @@ public class UserController {
         return userService.updateUser(user);
     }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public User createUser(@Valid @RequestBody User user,
+                           HttpServletRequest request) {
+        log.debug("{} [{}] на добавление нового пользователя", CLIENT_SEND_REQUEST, request.getMethod());
+        return userService.createUser(user);
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFriend(@PathVariable int id,
-                          @PathVariable int friendId,
+    public void addFriend(@PathVariable Integer id,
+                          @PathVariable Integer friendId,
                           HttpServletRequest request) {
         log.debug("{} [{}] пользователь [ID={}] добавляет в друзья [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, friendId);
@@ -70,8 +68,8 @@ public class UserController {
 
     @DeleteMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFriend(@PathVariable int id,
-                             @PathVariable int friendId,
+    public void removeFriend(@PathVariable Integer id,
+                             @PathVariable Integer friendId,
                              HttpServletRequest request) {
         log.debug("{} [{}] пользователь [ID={}] удаляет из друзей [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, friendId);
@@ -80,7 +78,7 @@ public class UserController {
 
     @GetMapping("/{id}/friends")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllFriendsByUserId(@PathVariable int id,
+    public List<User> getAllFriendsByUserId(@PathVariable Integer id,
                                             HttpServletRequest request) {
         log.debug("{} [{}] на получение списка друзей пользователя [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id);
@@ -89,12 +87,12 @@ public class UserController {
 
     @GetMapping("/{id}/friends/common/{otherId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllCommonFriendsByUserId(@PathVariable int id,
-                                                  @PathVariable int otherId,
+    public List<User> getAllCommonFriendsByUserId(@PathVariable Integer id,
+                                                  @PathVariable Integer otherId,
                                                   HttpServletRequest request) {
         log.debug("{} [{}] на получение списка общих друзей пользователей [ID={}] и [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, otherId);
         return userService.getAllCommonFriendsByUserId(id, otherId);
-    }*/
+    }
 
 }

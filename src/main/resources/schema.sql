@@ -7,14 +7,13 @@ create TABLE IF NOT EXISTS person (
 );
 
 create type IF NOT EXISTS status_friendship as ENUM (
-	'REQUEST', 'APPROVED', 'BLACK LIST'
+	'REQUEST', 'APPROVED', 'BLACK_LIST'
 );
 
 CREATE TABLE IF NOT EXISTS person_friend (
 	person_id INTEGER NOT NULL REFERENCES person(id),
 	person_friend_id INTEGER NOT NULL REFERENCES person(id),
-	friendship status_friendship NOT NULL DEFAULT 'REQUEST',
-	PRIMARY KEY (person_id, person_friend_id)
+	friendship status_friendship NOT NULL DEFAULT 'REQUEST'
 );
 
 create TABLE IF NOT EXISTS genre (
@@ -38,14 +37,12 @@ CREATE TABLE IF NOT EXISTS film (
 
 create TABLE IF NOT EXISTS film_genre (
 	film_id INTEGER NOT NULL REFERENCES film(id),
-	genre_id INTEGER NOT NULL REFERENCES genre(id),
-	PRIMARY KEY (film_id, genre_id)
+	genre_id INTEGER NOT NULL REFERENCES genre(id)
 );
 
 create TABLE IF NOT EXISTS film_likes (
 	film_id INTEGER NOT NULL REFERENCES film(id),
-	person_id INTEGER NOT NULL REFERENCES person(id),
-	PRIMARY KEY (film_id, person_id)
+	person_id INTEGER NOT NULL REFERENCES person(id)
 );
 
 INSERT INTO genre (name) VALUES ('Комедия'), ('Драма'), ('Мультфильм'), ('Триллер'), ('Документальный'), ('Боевик');
