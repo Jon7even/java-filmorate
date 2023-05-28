@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_FROM_DB;
-import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_IN_DB;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_FROM_DB;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_IN_DB;
 import static ru.yandex.practicum.filmorate.model.UserRelationStatus.*;
 import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_ADD_LOGIN;
 
@@ -73,7 +73,8 @@ public class UserServiceImpl implements UserService {
             log.debug("Данные из контроллера: [User={}],\n Данные из БД: [User={}]", user, checkFoundUser);
             return checkFoundUser;
         }
-        log.info("{} на обновление данных пользователя с [ID={}]", SERVICE_IN_DB, idUser);
+
+        log.debug("{} на обновление данных пользователя с [ID={}]", SERVICE_IN_DB, idUser);
         Optional<User> updatedUser = userStorage.updateUser(user);
 
         if (updatedUser.isEmpty()) {

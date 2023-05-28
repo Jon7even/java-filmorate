@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.file.Files.lines;
 import static java.nio.file.Paths.get;
-import static ru.yandex.practicum.filmorate.constans.HomeDir.HOME;
+import static ru.yandex.practicum.filmorate.constants.HomeDir.HOME;
 
 public class BanListUserName {
     private BanListUserName() {

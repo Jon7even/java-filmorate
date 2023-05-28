@@ -18,8 +18,8 @@ import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constans.NameLogs.DB_RUNNING;
-import static ru.yandex.practicum.filmorate.constans.NameLogs.DB_SUCCESS;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.DB_RUNNING;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.DB_SUCCESS;
 import static ru.yandex.practicum.filmorate.model.UserRelationStatus.*;
 import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_FIND_LOGIN;
 
@@ -35,19 +35,19 @@ public class UserDbStorage implements UserStorage {
     public List<User> getAllUsers() {
         log.debug("{} на получение списка всех пользователей. " +
                 "*Работает фильтр BanListFindLogin.properties", DB_RUNNING);
-        String sql = "SELECT * " +
+        String sqlFindAllUser = "SELECT * " +
                 "  FROM person";
-        return jdbcTemplate.queryForStream(sql, userRowMapper())
+        return jdbcTemplate.queryForStream(sqlFindAllUser, userRowMapper())
                 .filter(user -> !BAN_LIST_FIND_LOGIN.contains(user.getLogin()))
                 .collect(Collectors.toList());
     }
 
     public Optional<User> findUserById(Integer idUser) {
         log.debug("{} на получение данных пользователя [ID={}]", DB_RUNNING, idUser);
-        String sql = "SELECT * " +
-                "  FROM PERSON " +
+        String sqlFindUser = "SELECT * " +
+                "  FROM person " +
                 " WHERE id = ?";
-        List<User> users = jdbcTemplate.query(sql, userRowMapper(), idUser);
+        List<User> users = jdbcTemplate.query(sqlFindUser, userRowMapper(), idUser);
         int countUsers = users.size();
 
         if (countUsers > 1) {
@@ -116,8 +116,7 @@ public class UserDbStorage implements UserStorage {
                 statement.setString(1, user.getEmail());
                 statement.setString(2, user.getLogin());
                 statement.setString(3, user.getName());
-                statement.setDate(4, Date.valueOf(user.getBirthday())
-                );
+                statement.setDate(4, Date.valueOf(user.getBirthday()));
                 return statement;
             }, keyHolder);
 

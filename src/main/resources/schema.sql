@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS film (
 	description VARCHAR(200) NOT NULL DEFAULT 'Description coming soon',
 	release_date date NOT NULL,
 	duration INTEGER NOT NULL,
-	rating rating_mpa NOT NULL DEFAULT 'NC-17'
+	rating rating_mpa NOT NULL DEFAULT 'NC_17'
 );
 
 create TABLE IF NOT EXISTS film_genre (

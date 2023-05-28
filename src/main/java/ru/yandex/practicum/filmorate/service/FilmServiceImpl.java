@@ -6,15 +6,16 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotCreatedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRatingMPA;
+import ru.yandex.practicum.filmorate.model.FilmEnumRatingMPA;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
+import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_FROM_DB;
-import static ru.yandex.practicum.filmorate.constans.NameLogs.SERVICE_IN_DB;
-import static ru.yandex.practicum.filmorate.model.FilmRatingMPA.NC_17;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_FROM_DB;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_IN_DB;
+import static ru.yandex.practicum.filmorate.model.FilmEnumRatingMPA.NC_17;
 
 @Slf4j
 @Service
@@ -29,8 +30,9 @@ public class FilmServiceImpl implements FilmService {
     }
 
     public List<Film> getAllFilms() {
-        log.info("{} на получение списка всех фильмов", SERVICE_IN_DB);
+        log.debug("{} на получение списка всех фильмов", SERVICE_IN_DB);
         List<Film> listFilm = filmStorage.getAllFilms();
+
         if (listFilm.isEmpty()) {
             log.info("{} пустой список фильмов", SERVICE_FROM_DB);
         } else {
@@ -39,61 +41,64 @@ public class FilmServiceImpl implements FilmService {
         return listFilm;
     }
 
-    public Film addFilm(Film film) {
-        if (isValidatedCheckGenre(film)) {
-            film.setGenre("genreIsNotModerated");
-        }
-        film.setRating(getValidatedFilmRating(film.getRating()));
+    public Film findFilmById(Integer idFilm) {
+        filmNotFoundByIdCheckPositive(idFilm);
+        log.debug("{} на получение фильма [ID={}]", SERVICE_IN_DB, idFilm);
+        Optional<Film> getFindFilm = filmStorage.findFilmById(idFilm);
 
-        log.info("{} на добавление нового фильма", SERVICE_IN_DB);
-        Film createdFilm = filmStorage.addFilm(film);
-
-        if (createdFilm != null) {
-            log.info("{} успешно вернулся новый фильм [name={}]", SERVICE_FROM_DB, createdFilm.getName());
+        if (getFindFilm.isPresent()) {
+            log.info("{} успешно фильм [ID={}] [name={}]", SERVICE_FROM_DB, idFilm, getFindFilm.get().getName());
         } else {
-            log.error("Ошибка БД! {} [Film is null]. " +
+            log.error("{} [Film is empty] фильма с [ID={}] не существует", SERVICE_FROM_DB, idFilm);
+            filmNotFoundByIdException(idFilm);
+        }
+        return getFindFilm.get();
+    }
+
+    public Film addFilm(Film film) {
+        log.debug("{} на добавление нового фильма", SERVICE_IN_DB);
+        Optional<Film> createdFilm = filmStorage.addFilm(film);
+
+        if (createdFilm.isPresent()) {
+            log.info("{} успешно вернулся новый фильм [ID={}] [name={}]",
+                    SERVICE_FROM_DB, createdFilm.get().getId(), createdFilm.get().getName());
+        } else {
+            log.error("{} [Film is empty]. " +
                             "По неизвестной причине не получилось добавить новый фильм [name={}]",
                     SERVICE_FROM_DB, film.getName());
             throw new NotCreatedException("New film");
         }
-        return createdFilm;
+        return createdFilm.get();
     }
 
     public Film updateFilm(Film film) {
         int idFilm = film.getId();
-        filmNotFoundByIdCheckPositive(idFilm);
+        Film checkFoundFilm = checkExistFilm(idFilm);
 
-        if (isValidatedCheckGenre(film)) {
-            film.setGenre("genreIsNotModerated");
+        if (checkFoundFilm.equals(film)) {
+            log.info("{} фильм [name={}], но новых данных для обновления нет", SERVICE_FROM_DB,
+                    checkFoundFilm.getName());
+            log.debug("Данные из контроллера: [Film={}],\n Данные из БД: [Film={}]", film, checkFoundFilm);
+            return checkFoundFilm;
         }
 
-        film.setRating(getValidatedFilmRating(film.getRating()));
+        log.debug("{} на обновление фильма с [ID={}]", SERVICE_IN_DB, idFilm);
+        Optional<Film> getUpdateFilm = filmStorage.updateFilm(film);
 
-        log.info("{} на обновление фильма с [ID={}]", SERVICE_IN_DB, idFilm);
-        Film getUpdateFilm = filmStorage.updateFilm(film);
-
-        if (getUpdateFilm != null) {
-            log.info("{} успешно вернулся обновленный фильм [name={}]", SERVICE_FROM_DB, getUpdateFilm.getName());
-        } else {
-            log.error("Ошибка БД! {} [Film is null]. " +
-                    "По неизвестной причине не получилось обновить фильм [name={}]", SERVICE_FROM_DB, film.getName());
+        if (getUpdateFilm.isEmpty()) {
+            log.error("{} [Film is empty]. " +
+                            "По неизвестной причине не получилось обновить данные фильма [ID={}] [name={}]",
+                    SERVICE_FROM_DB, film.getId(), film.getName());
             filmNotFoundByIdException(idFilm);
+        } else {
+            log.info("{} успешно вернулся обновленный фильм [ID={}] [name={}]",
+                    SERVICE_FROM_DB, getUpdateFilm.get().getId(), getUpdateFilm.get().getName());
+
         }
-        return getUpdateFilm;
+        return getUpdateFilm.get();
     }
 
-    public Film findFilmById(int idFilm) {
-        filmNotFoundByIdCheckPositive(idFilm);
-        log.info("{} на получение фильма [ID={}]", SERVICE_IN_DB, idFilm);
-        Film getFindFilm = filmStorage.findFilmById(idFilm);
-        if (getFindFilm != null) {
-            log.info("{} успешно фильм с [ID={}]", SERVICE_FROM_DB, idFilm);
-        } else {
-            log.error("{} [Film is null] фильма с [ID={}] не существует", SERVICE_FROM_DB, idFilm);
-            filmNotFoundByIdException(idFilm);
-        }
-        return getFindFilm;
-    }
+/*
 
     public void addLikeByUserId(int idFilm, int idUser) {
         filmNotFoundByIdCheckPositive(idFilm);
@@ -140,8 +145,19 @@ public class FilmServiceImpl implements FilmService {
         }
         return listPopularFilms;
     }
+*/
 
-    private Boolean isValidatedCheckGenre(Film film) {
+    private Film checkExistFilm(Integer idFilm) {
+        filmNotFoundByIdCheckPositive(idFilm);
+        log.debug("{} на проверку пользователя с [ID={}]", SERVICE_IN_DB, idFilm);
+        Optional<Film> checkFoundFilm = filmStorage.findFilmById(idFilm);
+        if (checkFoundFilm.isEmpty()) {
+            filmNotFoundByIdException(idFilm);
+        }
+        return checkFoundFilm.get();
+    }
+
+/*    private Boolean isValidatedCheckGenre(Film film) {
         if (film.getGenre() == null || film.getGenre().isBlank()) {
             log.info("Пользователь не указал жанр фильма. Поле [genre] выставляется по default");
             return true;
@@ -155,14 +171,14 @@ public class FilmServiceImpl implements FilmService {
                     "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
             return NC_17.toString();
         }
-        if (FilmRatingMPA.checkValidateFilmRating(rating)) {
+        if (FilmEnumRatingMPA.checkValidateFilmRating(rating)) {
             return rating.toUpperCase();
         } else {
             log.info("Пользователь неправильно указал возрастной рейтинг фильма. " +
                     "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
             return NC_17.toString();
         }
-    }
+    }*/
 
     private void filmNotFoundByIdCheckPositive(int idFilm) {
         if (idFilm <= 0) {

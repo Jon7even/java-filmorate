@@ -1,31 +1,22 @@
 package ru.yandex.practicum.filmorate.model;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.Data;
 
-public enum FilmRatingMPA {
-    G("G"),
-    PG("PG"),
-    PG_13("PG-13"),
-    R("R"),
-    NC_17("NC-17");
+@Data
+public class FilmRatingMPA {
+    private Integer id;
+    private FilmEnumRatingMPA name;
 
-    private final String value;
-
-    FilmRatingMPA(String value) {
-        this.value = value;
+    @JsonCreator
+    public FilmRatingMPA(int id) {
+        this.id = id;
+        this.name = FilmEnumRatingMPA.valueNumber(id);
     }
 
-    public static Boolean checkValidateFilmRating(String rating) {
-        return Stream.of(FilmRatingMPA.values())
-                .map(FilmRatingMPA::toString)
-                .collect(Collectors.toList()).stream()
-                .anyMatch(rating::equalsIgnoreCase);
-    }
-
-    @Override
-    public String toString() {
-        return value;
+    public FilmRatingMPA(String value) {
+        this.id = FilmEnumRatingMPA.valueName(value).toInt();
+        this.name = FilmEnumRatingMPA.valueName(value);
     }
 
 }

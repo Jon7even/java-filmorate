@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.constans;
+package ru.yandex.practicum.filmorate.constants;
 
 public class HomeDir {
     private HomeDir() {
