@@ -130,30 +130,6 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    private UserRelationStatus getUserRelationStatus(Integer idUser, Integer idFriend) {
-        log.debug("{} проверки текущего статуса дружбы у пользователя [ID={}] с пользователем [ID={}]",
-                DB_RUNNING, idUser, idFriend);
-        String sql = "SELECT friendship FROM person_friend WHERE person_id = ? AND person_friend_id = ?";
-        try {
-            List<String> getQueryString = jdbcTemplate.queryForList(sql, String.class, idUser, idFriend);
-            int resultCount = getQueryString.size();
-
-            if (resultCount > 1) {
-                log.error("Ожидался [COUNT=1] статус дружбы между пользователями, а получилось [COUNT={}]",
-                        resultCount);
-                throw new UnknownException("Status Friendship");
-            } else if (resultCount < 1) {
-                log.debug("Статус еще не выставлен");
-                return NO_RELATION;
-            } else {
-                return valueOf(getQueryString.get(0));
-            }
-        } catch (DataAccessException e) {
-            log.error(e.getMessage());
-            throw new UnknownException("Status Friendship");
-        }
-    }
-
     public UserRelationStatus addFriend(Integer idUser, Integer idFriend) {
         log.debug("{} на добавление друга [ID={}] пользователю [ID={}]", DB_RUNNING, idFriend, idUser);
         UserRelationStatus userRelationStatus = getUserRelationStatus(idUser, idFriend);
@@ -172,7 +148,7 @@ public class UserDbStorage implements UserStorage {
                                 "   SET " +
                                 "       friendship = ? " +
                                 " WHERE person_id IN (?,?)";
-                        jdbcTemplate.update(sqlUpdate, idUser, idFriend, APPROVED.toString());
+                        jdbcTemplate.update(sqlUpdate, APPROVED.toString(), idUser, idFriend);
                         log.debug("В БД выполнен запрос на обновление статусов дружбы у пользователей " +
                                 "[ID={}] и [ID={}]", idFriend, idUser);
                     }
@@ -230,12 +206,11 @@ public class UserDbStorage implements UserStorage {
                     jdbcTemplate.update(sqlDelete, idUser, idFriend);
                     log.debug("В БД выполнен запрос на удаление из друзей пользователя [ID={}] у пользователя [ID={}]",
                             idFriend, idUser);
-
                     String sqlUpdate = "UPDATE person_friend " +
-                            "   SET " +
-                            "       friendship = ? " +
-                            " WHERE person_id = ?)";
-                    jdbcTemplate.update(sqlUpdate, REQUEST.toString(), idFriend);
+                            "SET friendship = ? " +
+                            "WHERE person_id = ? " +
+                            "AND person_friend_id = ?";
+                    jdbcTemplate.update(sqlUpdate, REQUEST.toString(), idFriend, idUser);
                     log.debug("В БД выполнен запрос на обновление статуса дружбы у [ID={}] с пользователем [ID={}]",
                             idFriend, idUser);
                     return getUserRelationStatus(idUser, idFriend);
@@ -295,6 +270,34 @@ public class UserDbStorage implements UserStorage {
             return Collections.emptyList();
         } else {
             return new ArrayList<>(commonFriends);
+        }
+    }
+
+    private UserRelationStatus getUserRelationStatus(Integer idUser, Integer idFriend) {
+        log.debug("{} проверки текущего статуса дружбы у пользователя [ID={}] с пользователем [ID={}]",
+                DB_RUNNING, idUser, idFriend);
+        String sql = "SELECT friendship FROM person_friend WHERE person_id = ? AND person_friend_id = ?";
+        try {
+            List<String> getQueryString = jdbcTemplate.queryForList(sql, String.class, idUser, idFriend);
+            int resultCount = getQueryString.size();
+
+            if (resultCount > 1) {
+                log.error("Ожидался [COUNT=1] статус дружбы между пользователями, а получилось [COUNT={}]",
+                        resultCount);
+                throw new UnknownException("Status Friendship");
+            } else if (resultCount < 1) {
+                log.debug("Статус еще не выставлен");
+                return NO_RELATION;
+            } else {
+                if (log.isDebugEnabled()) {
+                    UserRelationStatus userRelation = valueOf(getQueryString.get(0));
+                    log.debug("Текущий статус - [{}]", userRelation);
+                }
+                return valueOf(getQueryString.get(0));
+            }
+        } catch (DataAccessException e) {
+            log.error(e.getMessage());
+            throw new UnknownException("Status Friendship");
         }
     }
 
