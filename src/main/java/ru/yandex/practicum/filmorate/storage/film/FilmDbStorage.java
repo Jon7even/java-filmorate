@@ -78,9 +78,9 @@ public class FilmDbStorage implements FilmStorage {
                         " WHERE film_id = ? " +
                         " ORDER " +
                         "    BY id";
-                Set<FilmGenre> filmGenres = jdbcTemplate
-                        .queryForStream(sqlGetGenreForFilm, filmGenreRowMapper(), idFilm)
-                        .collect(Collectors.toSet());
+                Set<FilmGenre> filmGenres = jdbcTemplate.queryForStream(sqlGetGenreForFilm,
+                        filmGenreRowMapper(), idFilm).collect(Collectors.toSet());
+                ;
                 int countGenres = filmGenres.size();
                 Film foundFilm = films.get(0);
 
@@ -88,7 +88,9 @@ public class FilmDbStorage implements FilmStorage {
                     log.debug("Фильму еще не присвоено жанров");
                 } else {
                     log.debug("У фильма [COUNT={}] жанров", countGenres);
-                    foundFilm.setGenres(filmGenres);
+                    foundFilm.setGenres(filmGenres.stream()
+                            .sorted(Comparator.comparingInt(FilmGenre::getId))
+                            .collect(Collectors.toCollection(LinkedHashSet::new)));
 
                 }
                 return Optional.ofNullable(foundFilm);
@@ -138,16 +140,16 @@ public class FilmDbStorage implements FilmStorage {
         String sqlUpdateFilm = "UPDATE film " +
                 "   SET " +
                 "       title = ?, " +
-                "       release_date = ?, " +
                 "       description = ?, " +
+                "       release_date = ?, " +
                 "       duration = ?, " +
                 "       rating = ? " +
                 " WHERE id = ?";
         try {
             jdbcTemplate.update(sqlUpdateFilm,
                     film.getName(),
-                    film.getReleaseDate(),
                     film.getDescription(),
+                    film.getReleaseDate(),
                     film.getDuration(),
                     film.getMpa().getName().toString(),
                     film.getId()
@@ -155,13 +157,13 @@ public class FilmDbStorage implements FilmStorage {
 
             if (film.getGenres().equals(genres)) {
                 log.debug("{} обновлен фильм [ID={}], новых данных для обновления жанров нет",
-                        DB_SUCCESS, sqlUpdateFilm);
+                        DB_SUCCESS, filmId);
             } else {
                 log.debug("{} на удаление [COUNT={}] жанров", DB_RUNNING, genres.size());
-                genres.forEach(filmGenre -> removeGenreByFilm(filmGenre.getId(), filmId));
+                genres.forEach(filmGenre -> removeGenreByFilm(filmId, filmGenre.getId()));
 
                 UpdateGenresByListFilm(film.getGenres(), filmId);
-                log.debug("{} обновлен фильм [ID={}] и жанры", DB_SUCCESS, sqlUpdateFilm);
+                log.debug("{} обновлен фильм [ID={}] и жанры", DB_SUCCESS, filmId);
             }
             return findFilmById(filmId);
         } catch (DataAccessException e) {
@@ -228,20 +230,24 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("{} на получение списка [COUNT={}] популярных фильмов", DB_RUNNING, count);
         List<Integer> filmsId = getAllIdFilms();
         int resultCount = filmsId.size();
-
-        if (resultCount == 20) { //доработать
+        log.debug("найдено {} айдишников", resultCount);
+        if (resultCount > 0) {
             log.debug("Найдено [COUNT={}] популярных фильмов, БД формирует запрос", resultCount);
-            List<Film> popularFilm = filmsId.stream()
+            List<Film> film = filmsId.stream()
                     .map(this::findFilmById)
                     .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .filter(film -> !getAllLikesByFilm(film.getId()).isEmpty())
-                    .map(FilmLikes::new)
+                    .map(Optional::get).collect(Collectors.toList());
+
+            Set<FilmLikes> filmLikes = film.stream()
+                    .map(FilmLikes::new).collect(Collectors.toSet());
+            filmLikes.forEach(f -> f.setLikes(getAllLikesByFilm(f.getFilm().getId())));
+
+            return filmLikes.stream()
                     .sorted(Comparator.comparingInt(FilmLikes::getCountLikes).reversed())
-                    .map(FilmLikes::getFilm)
+                    .collect(Collectors.toCollection(LinkedHashSet::new)).stream()
                     .limit(count)
+                    .map(FilmLikes::getFilm)
                     .collect(Collectors.toList());
-            return popularFilm;
         } else {
             return Collections.emptyList();
         }
@@ -291,7 +297,7 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("{} на удаление жанра [ID={}] из фильма [ID={}]", DB_RUNNING, idGenre, idFilm);
         String sqlRemoveGenreByFilm = "DELETE FROM film_genre " +
                 " WHERE film_id = ? " +
-                "   AND person_id = ? ";
+                "   AND genre_id= ? ";
         try {
             jdbcTemplate.update(sqlRemoveGenreByFilm, idFilm, idGenre);
         } catch (DataAccessException e) {

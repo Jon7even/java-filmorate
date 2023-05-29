@@ -13,7 +13,7 @@ create type IF NOT EXISTS status_friendship as ENUM (
 CREATE TABLE IF NOT EXISTS person_friend (
 	person_id INTEGER NOT NULL REFERENCES person(id),
 	person_friend_id INTEGER NOT NULL REFERENCES person(id),
-	friendship status_friendship NOT NULL DEFAULT 'REQUEST'
+	friendship status_friendship NOT NULL
 );
 
 create TABLE IF NOT EXISTS genre (

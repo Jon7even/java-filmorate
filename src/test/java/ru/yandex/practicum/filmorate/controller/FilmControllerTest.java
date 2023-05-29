@@ -68,7 +68,7 @@ public class FilmControllerTest {
 
     void initFilmsAndUser() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
-                LocalDate.of(1901, 1, 1), 100, "G");
+                LocalDate.of(1901, 1, 1), 100, 1);
         filmDefault2 = new Film(1, "filmDefault2", "description2",
                 LocalDate.of(2007, 7, 1), 300, 2);
         userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
