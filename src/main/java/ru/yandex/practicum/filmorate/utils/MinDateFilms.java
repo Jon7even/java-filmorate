@@ -16,7 +16,6 @@ package ru.yandex.practicum.filmorate.utils;
 import java.time.LocalDate;
 import java.time.Month;
 
-
 public class MinDateFilms {
     private MinDateFilms() {
     }
