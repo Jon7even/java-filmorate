@@ -4,12 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmEnumGenre;
+import ru.yandex.practicum.filmorate.model.FilmGenre;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.CLIENT_SEND_REQUEST;
 
@@ -53,7 +57,7 @@ public class FilmController {
         log.debug("{} [{}] на обновление фильма", CLIENT_SEND_REQUEST, request.getMethod());
         return filmService.updateFilm(film);
     }
-/*
+
     @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable Integer id,
@@ -76,7 +80,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     @ResponseStatus(HttpStatus.OK)
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integereger count,
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count,
                                       HttpServletRequest request) {
         log.debug("{} [{}] на получение списка популярных фильмов", CLIENT_SEND_REQUEST, request.getMethod());
         if (!(count <= 0)) {
@@ -84,6 +88,6 @@ public class FilmController {
         } else {
             throw new IncorrectParameterException("count");
         }
-    }*/
+    }
 
 }

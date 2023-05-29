@@ -17,6 +17,10 @@ public enum FilmEnumRatingMPA {
     private static final Map<Integer, FilmEnumRatingMPA> ID_MPA = new HashMap<>();
     private static final Map<String, FilmEnumRatingMPA> NAME_MPA = new HashMap<>();
 
+    public static Map<Integer, FilmEnumRatingMPA> getIntMPA() {
+        return ID_MPA;
+    }
+
     private final String name;
     private final int number;
 

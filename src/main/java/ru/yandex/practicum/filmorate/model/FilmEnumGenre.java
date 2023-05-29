@@ -44,6 +44,10 @@ public enum FilmEnumGenre {
         return NAME_GENRE.get(name);
     }
 
+    public static Integer getCountGenre() {
+        return ID_GENRE.size();
+    }
+
     @JsonValue
     public String getName() {
         return name;

@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotCreatedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmEnumRatingMPA;
+import ru.yandex.practicum.filmorate.model.FilmLikes;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -15,7 +16,6 @@ import java.util.Optional;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_FROM_DB;
 import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_IN_DB;
-import static ru.yandex.practicum.filmorate.model.FilmEnumRatingMPA.NC_17;
 
 @Slf4j
 @Service
@@ -83,7 +83,7 @@ public class FilmServiceImpl implements FilmService {
         }
 
         log.debug("{} на обновление фильма с [ID={}]", SERVICE_IN_DB, idFilm);
-        Optional<Film> getUpdateFilm = filmStorage.updateFilm(film);
+        Optional<Film> getUpdateFilm = filmStorage.updateFilm(film, checkFoundFilm.getGenres());
 
         if (getUpdateFilm.isEmpty()) {
             log.error("{} [Film is empty]. " +
@@ -98,35 +98,42 @@ public class FilmServiceImpl implements FilmService {
         return getUpdateFilm.get();
     }
 
-/*
-
-    public void addLikeByUserId(int idFilm, int idUser) {
-        filmNotFoundByIdCheckPositive(idFilm);
+    public void addLikeByUserId(Integer idFilm, Integer idUser) {
         userNotFoundByIdCheckPositive(idUser);
-        //userStorage.findUserById(idUser);
-        log.info("{} на добавление лайка пользователя [ID={}] фильму [ID={}]",
-                SERVICE_IN_DB, idUser, idFilm);
-        Film getFilm = filmStorage.addLikeByUserId(idFilm, idUser);
+        FilmLikes film = new FilmLikes(checkExistFilm(idFilm));
+        Optional<User> user = userStorage.findUserById(idUser);
 
-        if (getFilm.getLikes().contains(idUser)) {
+        if (user.isEmpty()) {
+            userNotFoundByIdException(idUser);
+        }
+        log.debug("{} на добавление лайка пользователя [ID={}] фильму [ID={}]",
+                SERVICE_IN_DB, idUser, idFilm);
+        FilmLikes getFilmAddLike = filmStorage.addLikeByUserId(film, idUser);
+
+        if (getFilmAddLike.getLikes().contains(idUser)) {
             log.info("{} успешно обновленный фильм: [ID={}] пользователь [ID={}] поставил лайк",
                     SERVICE_FROM_DB, idUser, idFilm);
         } else {
-            log.error("{} [Film is null] фильма с [ID={}] не существует", SERVICE_FROM_DB, idFilm);
+            log.error("{} [List Like is empty] лайк от пользователя [ID={}] не поставлен", SERVICE_FROM_DB, idFilm);
             filmNotFoundByIdException(idFilm);
         }
     }
 
-    public void removeLikeByUserId(int idFilm, int idUser) {
-        filmNotFoundByIdCheckPositive(idFilm);
+    public void removeLikeByUserId(Integer idFilm, Integer idUser) {
         userNotFoundByIdCheckPositive(idUser);
-        //userStorage.findUserById(idUser);
-        log.info("{} на удаление лайка пользователя [ID={}] у фильма [ID={}]",
-                SERVICE_IN_DB, idUser, idFilm);
-        Film getFilm = filmStorage.removeLikeByUserId(idFilm, idUser);
+        FilmLikes film = new FilmLikes(checkExistFilm(idFilm));
+        Optional<User> user = userStorage.findUserById(idUser);
 
-        if (getFilm.getLikes().contains(idUser)) {
-            log.error("{} [Film is null] фильма с [ID={}] не существует", SERVICE_FROM_DB, idFilm);
+        if (user.isEmpty()) {
+            userNotFoundByIdException(idUser);
+        }
+        log.debug("{} на удаление лайка пользователя [ID={}] у фильма [ID={}]",
+                SERVICE_IN_DB, idUser, idFilm);
+        FilmLikes getFilmAddLike = filmStorage.removeLikeByUserId(film, idUser);
+
+        if (getFilmAddLike.getLikes().contains(idUser)) {
+            log.error("{} лайк от пользователя [ID={}] фильму [ID={}] не был удален",
+                    SERVICE_FROM_DB, idUser, idFilm);
             filmNotFoundByIdException(idFilm);
         } else {
             log.info("{} успешно обновленный фильм: [ID={}] пользователь [ID={}] удалил лайк",
@@ -134,18 +141,17 @@ public class FilmServiceImpl implements FilmService {
         }
     }
 
-    public List<Film> getPopularFilms(int count) {
-        log.info("{} на получение [count={}] популярных фильмов", SERVICE_IN_DB, count);
+    public List<Film> getPopularFilms(Integer count) {
+        log.info("{} на получение [COUNT={}] популярных фильмов", SERVICE_IN_DB, count);
         List<Film> listPopularFilms = filmStorage.getPopularFilms(count);
         if (listPopularFilms.isEmpty()) {
             log.info("{} пустой список популярных фильмов", SERVICE_FROM_DB);
         } else {
-            log.info("{} успешно список из [count={}] популярных фильмов. " +
-                    "Изначальный запрос был [count={}]", SERVICE_FROM_DB, listPopularFilms.size(), count);
+            log.info("{} успешно список из [COUNT={}] популярных фильмов. " +
+                    "Изначальный запрос был [COUNT={}]", SERVICE_FROM_DB, listPopularFilms.size(), count);
         }
         return listPopularFilms;
     }
-*/
 
     private Film checkExistFilm(Integer idFilm) {
         filmNotFoundByIdCheckPositive(idFilm);
@@ -156,29 +162,6 @@ public class FilmServiceImpl implements FilmService {
         }
         return checkFoundFilm.get();
     }
-
-/*    private Boolean isValidatedCheckGenre(Film film) {
-        if (film.getGenre() == null || film.getGenre().isBlank()) {
-            log.info("Пользователь не указал жанр фильма. Поле [genre] выставляется по default");
-            return true;
-        }
-        return false;
-    }
-
-    private String getValidatedFilmRating(String rating) {
-        if (rating == null || rating.isBlank()) {
-            log.info("Пользователь не указал возрастной рейтинг фильма. " +
-                    "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
-            return NC_17.toString();
-        }
-        if (FilmEnumRatingMPA.checkValidateFilmRating(rating)) {
-            return rating.toUpperCase();
-        } else {
-            log.info("Пользователь неправильно указал возрастной рейтинг фильма. " +
-                    "Поле [rating] выставляется по default. На вход было получено [{}]", rating);
-            return NC_17.toString();
-        }
-    }*/
 
     private void filmNotFoundByIdCheckPositive(int idFilm) {
         if (idFilm <= 0) {
@@ -194,6 +177,10 @@ public class FilmServiceImpl implements FilmService {
         if (idUser <= 0) {
             throw new NotFoundException(String.format("User with ID=%d", idUser));
         }
+    }
+
+    private void userNotFoundByIdException(int idUser) {
+        throw new NotFoundException(String.format("User with ID=%d", idUser));
     }
 
 }
