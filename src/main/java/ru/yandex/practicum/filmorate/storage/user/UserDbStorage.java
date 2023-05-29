@@ -9,8 +9,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEnumRelationStatus;
 import ru.yandex.practicum.filmorate.model.UserRelation;
-import ru.yandex.practicum.filmorate.model.UserRelationStatus;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.DB_RUNNING;
 import static ru.yandex.practicum.filmorate.constants.NameLogs.DB_SUCCESS;
-import static ru.yandex.practicum.filmorate.model.UserRelationStatus.*;
+import static ru.yandex.practicum.filmorate.model.UserEnumRelationStatus.*;
 import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_FIND_LOGIN;
 
 @Slf4j
@@ -42,7 +42,7 @@ public class UserDbStorage implements UserStorage {
                 .collect(Collectors.toList());
     }
 
-    public Optional<User> findUserById(Integer idUser) {
+    public Optional<User> findUserById(int idUser) {
         log.debug("{} на получение данных пользователя [ID={}]", DB_RUNNING, idUser);
         String sqlFindUser = "SELECT * " +
                 "  FROM person " +
@@ -64,15 +64,7 @@ public class UserDbStorage implements UserStorage {
     public Optional<User> updateUser(User user) {
         int idUpdateUser = user.getId();
         log.debug("{} на обновление данных пользователя [ID={}]", DB_RUNNING, idUpdateUser);
-
-        if (isCheckLoginOnDuplicate(user.getLogin())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Пользователь с таким логином [%s] уже имеется в системе", user.getLogin()))));
-        }
-        if (isCheckEmailInDateBase(user.getEmail())) {
-            log.warn("Пользователь сменил [email={}] но он уже есть в БД", user.getEmail());
-        }
-        String sql = "UPDATE person " +
+        String sqlUpdateUser = "UPDATE person " +
                 "   SET " +
                 "       email = ?, " +
                 "       login = ?, " +
@@ -80,7 +72,7 @@ public class UserDbStorage implements UserStorage {
                 "       birthday = ? " +
                 " WHERE id = ?";
         try {
-            jdbcTemplate.update(sql,
+            jdbcTemplate.update(sqlUpdateUser,
                     user.getEmail(),
                     user.getLogin(),
                     user.getName(),
@@ -97,19 +89,9 @@ public class UserDbStorage implements UserStorage {
 
     public Optional<User> createUser(User user) {
         log.debug("{} на добавление нового пользователя", DB_RUNNING);
-
-        if (isCheckLoginOnDuplicate(user.getLogin())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Пользователь с таким логином [%s] уже имеется в системе", user.getLogin()))));
-        }
-        if (isCheckEmailInDateBase(user.getEmail())) {
-            throw new ValidationException(Collections.singleton(Map.of("login",
-                    String.format("Пользователь с таким email [%s] уже имеется в системе", user.getEmail()))));
-        }
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String sql = "INSERT INTO person (email, login, first_name, BIRTHDAY) " +
-                "     VALUES(?, ?, ?, ?)";
-
+                " VALUES(?, ?, ?, ?)";
         try {
             jdbcTemplate.update(connection -> {
                 PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -129,15 +111,15 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public UserRelationStatus addFriend(Integer idUser, Integer idFriend) {
+    public UserEnumRelationStatus addFriend(int idUser, int idFriend) {
         log.debug("{} на добавление друга [ID={}] пользователю [ID={}]", DB_RUNNING, idFriend, idUser);
-        UserRelationStatus userRelationStatus = getUserRelationStatus(idUser, idFriend);
+        UserEnumRelationStatus status = getUserRelationStatus(idUser, idFriend);
 
-        switch (userRelationStatus) {
+        switch (status) {
             case NO_RELATION:
                 try {
                     String sqlInsert = "INSERT INTO person_friend (person_id, person_friend_id, friendship) " +
-                            "     VALUES(?, ?, ?)";
+                            " VALUES(?, ?, ?)";
                     jdbcTemplate.update(sqlInsert, idUser, idFriend, REQUEST.toString());
                     log.debug("В БД выполнен запрос на добавление друга [ID={}] пользователю [ID={}]",
                             idFriend, idUser);
@@ -168,7 +150,7 @@ public class UserDbStorage implements UserStorage {
                 throw new AlreadyExistsException(String.format("Friend with ID=%d", idFriend));
 
             case BLACK_LIST:
-                log.error("Функция поместить пользователя в черный список еще не реализована.");
+                log.error("Функция [поместить пользователя в черный список] еще не реализована.");
                 throw new AlreadyExistsException(String.format("Friend with ID=%d", idFriend));
 
             default:
@@ -177,20 +159,22 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public UserRelationStatus removeFriend(Integer idUser, Integer idFriend) {
+    public UserEnumRelationStatus removeFriend(int idUser, int idFriend) {
         log.debug("{} на удаление друга [ID={}] у пользователя [ID={}]", DB_RUNNING, idFriend, idUser);
 
-        UserRelationStatus userRelationStatus = getUserRelationStatus(idUser, idFriend);
+        UserEnumRelationStatus status = getUserRelationStatus(idUser, idFriend);
 
-        switch (userRelationStatus) {
+        switch (status) {
             case NO_RELATION:
                 log.error("У пользователя [ID={}] уже удален друг [ID={}]", idUser, idFriend);
                 throw new NotRemovedException(String.format("Friend ID=%d for user ID=%d", idFriend, idUser));
 
             case REQUEST:
                 try {
-                    String sqlDelete = "DELETE FROM person_friend WHERE person_id = ? AND person_friend_id = ?";
-                    jdbcTemplate.update(sqlDelete, idUser, idFriend);
+                    String sqlDeleteRequestFriend = "DELETE FROM person_friend " +
+                            " WHERE person_id = ? " +
+                            "   AND person_friend_id = ?";
+                    jdbcTemplate.update(sqlDeleteRequestFriend, idUser, idFriend);
                     log.debug("В БД выполнен запрос на удаление заявки в друзья пользователя " +
                             "[ID={}] у пользователя [ID={}]", idFriend, idUser);
                     return getUserRelationStatus(idUser, idFriend);
@@ -201,15 +185,17 @@ public class UserDbStorage implements UserStorage {
 
             case APPROVED:
                 try {
-                    String sqlDelete = "DELETE FROM person_friend WHERE person_id = ? AND person_friend_id = ?";
-                    jdbcTemplate.update(sqlDelete, idUser, idFriend);
+                    String sqlDeleteFriend = "DELETE FROM person_friend " +
+                            " WHERE person_id = ? " +
+                            "   AND person_friend_id = ?";
+                    jdbcTemplate.update(sqlDeleteFriend, idUser, idFriend);
                     log.debug("В БД выполнен запрос на удаление из друзей пользователя [ID={}] у пользователя [ID={}]",
                             idFriend, idUser);
-                    String sqlUpdate = "UPDATE person_friend " +
-                            "SET friendship = ? " +
-                            "WHERE person_id = ? " +
-                            "AND person_friend_id = ?";
-                    jdbcTemplate.update(sqlUpdate, REQUEST.toString(), idFriend, idUser);
+                    String sqlUpdateStatus = "UPDATE person_friend " +
+                            "   SET friendship = ? " +
+                            " WHERE person_id = ? " +
+                            "   AND person_friend_id = ?";
+                    jdbcTemplate.update(sqlUpdateStatus, REQUEST.toString(), idFriend, idUser);
                     log.debug("В БД выполнен запрос на обновление статуса дружбы у [ID={}] с пользователем [ID={}]",
                             idFriend, idUser);
                     return getUserRelationStatus(idUser, idFriend);
@@ -219,7 +205,7 @@ public class UserDbStorage implements UserStorage {
                 }
 
             case BLACK_LIST:
-                log.error("Функция удалить пользователя из черного списка еще не реализована.");
+                log.error("Функция [удалить пользователя из черного списка] еще не реализована.");
                 throw new AlreadyExistsException(String.format("Friend with ID=%d", idFriend));
 
             default:
@@ -272,12 +258,15 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    private UserRelationStatus getUserRelationStatus(Integer idUser, Integer idFriend) {
+    private UserEnumRelationStatus getUserRelationStatus(int idUser, int idFriend) {
         log.debug("{} проверки текущего статуса дружбы у пользователя [ID={}] с пользователем [ID={}]",
                 DB_RUNNING, idUser, idFriend);
-        String sql = "SELECT friendship FROM person_friend WHERE person_id = ? AND person_friend_id = ?";
+        String sqlCheckStatus = "SELECT friendship " +
+                "  FROM person_friend " +
+                " WHERE person_id = ? " +
+                "   AND person_friend_id = ?";
         try {
-            List<String> getQueryString = jdbcTemplate.queryForList(sql, String.class, idUser, idFriend);
+            List<String> getQueryString = jdbcTemplate.queryForList(sqlCheckStatus, String.class, idUser, idFriend);
             int resultCount = getQueryString.size();
 
             if (resultCount > 1) {
@@ -289,7 +278,7 @@ public class UserDbStorage implements UserStorage {
                 return NO_RELATION;
             } else {
                 if (log.isDebugEnabled()) {
-                    UserRelationStatus userRelation = valueOf(getQueryString.get(0));
+                    UserEnumRelationStatus userRelation = valueOf(getQueryString.get(0));
                     log.debug("Текущий статус - [{}]", userRelation);
                 }
                 return valueOf(getQueryString.get(0));
@@ -307,13 +296,5 @@ public class UserDbStorage implements UserStorage {
                 rs.getString("login"),
                 rs.getString("first_name"),
                 rs.getDate("birthday").toLocalDate());
-    }
-
-    private Boolean isCheckEmailInDateBase(String emailCheck) {
-        return false; //users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(emailCheck));
-    }
-
-    private Boolean isCheckLoginOnDuplicate(String login) {
-        return false; // users.values().stream().anyMatch(user -> user.getLogin().equalsIgnoreCase(login));
     }
 }

@@ -13,27 +13,21 @@ public enum FilmEnumGenre {
     DOCUMENTAL("Документальный", 5),
     ACTION_MOVIE("Боевик", 6);
 
-    private static final Map<Integer, FilmEnumGenre> ID_GENRE = new HashMap<>();
-    private static final Map<String, FilmEnumGenre> NAME_GENRE = new HashMap<>();
-
     private final String name;
     private final int number;
-
-    static {
-        for (FilmEnumGenre f : values()) {
-            ID_GENRE.put(f.number, f);
-            NAME_GENRE.put(f.toString(), f);
-        }
-    }
+    private static final Map<Integer, FilmEnumGenre> ID_GENRE = new HashMap<>();
+    private static final Map<String, FilmEnumGenre> NAME_GENRE = new HashMap<>();
 
     FilmEnumGenre(String name, int number) {
         this.name = name;
         this.number = number;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    static {
+        for (FilmEnumGenre f : values()) {
+            ID_GENRE.put(f.number, f);
+            NAME_GENRE.put(f.toString(), f);
+        }
     }
 
     public static FilmEnumGenre valueNumber(int number) {
@@ -44,12 +38,13 @@ public enum FilmEnumGenre {
         return NAME_GENRE.get(name);
     }
 
-    public static Integer getCountGenre() {
-        return ID_GENRE.size();
-    }
-
     @JsonValue
     public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
         return name;
     }
 }

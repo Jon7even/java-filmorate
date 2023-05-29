@@ -14,26 +14,21 @@ public enum FilmEnumRatingMPA {
     R("R", 4),
     NC_17("NC-17", 5);
 
+    private final String name;
+    private final int number;
     private static final Map<Integer, FilmEnumRatingMPA> ID_MPA = new HashMap<>();
     private static final Map<String, FilmEnumRatingMPA> NAME_MPA = new HashMap<>();
 
-    public static Map<Integer, FilmEnumRatingMPA> getIntMPA() {
-        return ID_MPA;
+    FilmEnumRatingMPA(String name, int number) {
+        this.name = name;
+        this.number = number;
     }
-
-    private final String name;
-    private final int number;
 
     static {
         for (FilmEnumRatingMPA f : values()) {
             ID_MPA.put(f.number, f);
             NAME_MPA.put(f.toString(), f);
         }
-    }
-
-    FilmEnumRatingMPA(String name, int number) {
-        this.name = name;
-        this.number = number;
     }
 
     @JsonCreator
@@ -53,9 +48,8 @@ public enum FilmEnumRatingMPA {
         }
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public static Map<Integer, FilmEnumRatingMPA> getIntMPA() {
+        return ID_MPA;
     }
 
     public Integer toInt() {
@@ -67,4 +61,8 @@ public enum FilmEnumRatingMPA {
         return name;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
 }

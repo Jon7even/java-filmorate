@@ -11,15 +11,15 @@ import java.util.Set;
 public interface FilmStorage {
     List<Film> getAllFilms();
 
-    Optional<Film> findFilmById(Integer id);
+    Optional<Film> findFilmById(int id);
 
     Optional<Film> addFilm(Film film);
 
     Optional<Film> updateFilm(Film film, Set<FilmGenre> genres);
 
-    FilmLikes addLikeByUserId(FilmLikes film, Integer userId);
+    FilmLikes addLikeByUserId(FilmLikes film, int userId);
 
-    FilmLikes removeLikeByUserId(FilmLikes film, Integer userId);
+    FilmLikes removeLikeByUserId(FilmLikes film, int userId);
 
-    List<Film> getPopularFilms(Integer count);
+    List<Film> getPopularFilms(int count);
 }

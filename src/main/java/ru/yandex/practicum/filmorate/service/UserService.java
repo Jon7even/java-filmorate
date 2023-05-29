@@ -7,17 +7,17 @@ import java.util.List;
 public interface UserService {
     List<User> getAllUsers();
 
-    User findUserById(Integer idUser);
+    User findUserById(int idUser);
 
     User updateUser(User user);
 
     User createUser(User user);
 
-    void addFriend(Integer idUser, Integer idFriend);
+    void addFriend(int idUser, int idFriend);
 
-    void removeFriend(Integer idUser, Integer idFriend);
+    void removeFriend(int idUser, int idFriend);
 
-    List<User> getAllFriendsByUserId(Integer idUser);
+    List<User> getAllFriendsByUserId(int idUser);
 
-    List<User> getAllCommonFriendsByUserId(Integer idUser, Integer idFriend);
+    List<User> getAllCommonFriendsByUserId(int idUser, int idFriend);
 }

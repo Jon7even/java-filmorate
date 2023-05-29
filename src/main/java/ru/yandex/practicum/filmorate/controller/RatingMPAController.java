@@ -32,7 +32,7 @@ public class RatingMPAController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public FilmRatingMPA getMPAById(@PathVariable("id") Integer id,
+    public FilmRatingMPA getMPAById(@PathVariable("id") int id,
                                     HttpServletRequest request) {
         log.debug("{} [{}] на получение рейтинга по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
         if (!(id <= 0)) {

@@ -34,7 +34,6 @@ public class Film {
 
     private Set<FilmGenre> genres;
 
-
     @JsonCreator
     public Film(int id, String name, String description, LocalDate releaseDate, long duration, int mpaInt) {
         this.id = id;
@@ -44,17 +43,6 @@ public class Film {
         this.duration = duration;
         this.mpa = new FilmRatingMPA(mpaInt);
         this.genres = new HashSet<>();
-    }
-
-    public Film(int id, String name, String description, LocalDate releaseDate, long duration, int mpaInt,
-                Set<FilmGenre> genres) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.mpa = new FilmRatingMPA(mpaInt);
-        this.genres = new HashSet<>(genres);
     }
 
     public Film(int id, String name, String description, LocalDate releaseDate, long duration, String mpaString) {

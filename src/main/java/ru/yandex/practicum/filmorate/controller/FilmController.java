@@ -6,14 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmEnumGenre;
-import ru.yandex.practicum.filmorate.model.FilmGenre;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.CLIENT_SEND_REQUEST;
 
@@ -30,7 +27,7 @@ public class FilmController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Film getFilm(@PathVariable("id") Integer id,
+    public Film getFilm(@PathVariable("id") int id,
                         HttpServletRequest request) {
         log.debug("{} [{}] на получение фильма по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
         return filmService.findFilmById(id);
@@ -60,8 +57,8 @@ public class FilmController {
 
     @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addLike(@PathVariable Integer id,
-                        @PathVariable Integer userId,
+    public void addLike(@PathVariable int id,
+                        @PathVariable int userId,
                         HttpServletRequest request) {
         log.debug("{} [{}] пользователь с [ID={}] добавляет лайк фильму с [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), userId, id);
@@ -70,8 +67,8 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeLike(@PathVariable Integer id,
-                           @PathVariable Integer userId,
+    public void removeLike(@PathVariable int id,
+                           @PathVariable int userId,
                            HttpServletRequest request) {
         log.debug("{} [{}] пользователь [ID={}] удаляет лайк у фильма с [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), userId, id);
@@ -80,7 +77,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     @ResponseStatus(HttpStatus.OK)
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count,
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) int count,
                                       HttpServletRequest request) {
         log.debug("{} [{}] на получение списка популярных фильмов", CLIENT_SEND_REQUEST, request.getMethod());
         if (!(count <= 0)) {

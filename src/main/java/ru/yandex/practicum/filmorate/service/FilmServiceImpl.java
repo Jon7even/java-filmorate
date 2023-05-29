@@ -41,7 +41,7 @@ public class FilmServiceImpl implements FilmService {
         return listFilm;
     }
 
-    public Film findFilmById(Integer idFilm) {
+    public Film findFilmById(int idFilm) {
         filmNotFoundByIdCheckPositive(idFilm);
         log.debug("{} на получение фильма [ID={}]", SERVICE_IN_DB, idFilm);
         Optional<Film> getFindFilm = filmStorage.findFilmById(idFilm);
@@ -98,7 +98,7 @@ public class FilmServiceImpl implements FilmService {
         return getUpdateFilm.get();
     }
 
-    public void addLikeByUserId(Integer idFilm, Integer idUser) {
+    public void addLikeByUserId(int idFilm, int idUser) {
         userNotFoundByIdCheckPositive(idUser);
         FilmLikes film = new FilmLikes(checkExistFilm(idFilm));
         Optional<User> user = userStorage.findUserById(idUser);
@@ -119,7 +119,7 @@ public class FilmServiceImpl implements FilmService {
         }
     }
 
-    public void removeLikeByUserId(Integer idFilm, Integer idUser) {
+    public void removeLikeByUserId(int idFilm, int idUser) {
         userNotFoundByIdCheckPositive(idUser);
         FilmLikes film = new FilmLikes(checkExistFilm(idFilm));
         Optional<User> user = userStorage.findUserById(idUser);
@@ -141,7 +141,7 @@ public class FilmServiceImpl implements FilmService {
         }
     }
 
-    public List<Film> getPopularFilms(Integer count) {
+    public List<Film> getPopularFilms(int count) {
         log.info("{} на получение [COUNT={}] популярных фильмов", SERVICE_IN_DB, count);
         List<Film> listPopularFilms = filmStorage.getPopularFilms(count);
         if (listPopularFilms.isEmpty()) {
@@ -153,7 +153,7 @@ public class FilmServiceImpl implements FilmService {
         return listPopularFilms;
     }
 
-    private Film checkExistFilm(Integer idFilm) {
+    private Film checkExistFilm(int idFilm) {
         filmNotFoundByIdCheckPositive(idFilm);
         log.debug("{} на проверку пользователя с [ID={}]", SERVICE_IN_DB, idFilm);
         Optional<Film> checkFoundFilm = filmStorage.findFilmById(idFilm);

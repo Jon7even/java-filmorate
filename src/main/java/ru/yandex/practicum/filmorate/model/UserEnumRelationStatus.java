@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-public enum UserRelationStatus {
+public enum UserEnumRelationStatus {
     REQUEST("REQUEST"),
     APPROVED("APPROVED"),
     BLACK_LIST("BLACK LIST"),
@@ -8,7 +8,7 @@ public enum UserRelationStatus {
 
     private final String value;
 
-    UserRelationStatus(String value) {
+    UserEnumRelationStatus(String value) {
         this.value = value;
     }
 

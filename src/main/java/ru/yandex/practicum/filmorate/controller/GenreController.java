@@ -33,7 +33,7 @@ public class GenreController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public FilmGenre getGenresById(@PathVariable("id") Integer id,
+    public FilmGenre getGenresById(@PathVariable("id") int id,
                                    HttpServletRequest request) {
         log.debug("{} [{}] на получение жанра по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
         if (!(id <= 0)) {

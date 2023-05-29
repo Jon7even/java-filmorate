@@ -33,7 +33,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public User getUser(@PathVariable Integer id,
+    public User getUser(@PathVariable int id,
                         HttpServletRequest request) {
         log.debug("{} [{}] на получение пользователя по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
         return userService.findUserById(id);
@@ -58,8 +58,8 @@ public class UserController {
 
     @PutMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFriend(@PathVariable Integer id,
-                          @PathVariable Integer friendId,
+    public void addFriend(@PathVariable int id,
+                          @PathVariable int friendId,
                           HttpServletRequest request) {
         log.debug("{} [{}] пользователь [ID={}] добавляет в друзья [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, friendId);
@@ -68,8 +68,8 @@ public class UserController {
 
     @DeleteMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFriend(@PathVariable Integer id,
-                             @PathVariable Integer friendId,
+    public void removeFriend(@PathVariable int id,
+                             @PathVariable int friendId,
                              HttpServletRequest request) {
         log.debug("{} [{}] пользователь [ID={}] удаляет из друзей [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, friendId);
@@ -78,7 +78,7 @@ public class UserController {
 
     @GetMapping("/{id}/friends")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllFriendsByUserId(@PathVariable Integer id,
+    public List<User> getAllFriendsByUserId(@PathVariable int id,
                                             HttpServletRequest request) {
         log.debug("{} [{}] на получение списка друзей пользователя [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id);
@@ -87,8 +87,8 @@ public class UserController {
 
     @GetMapping("/{id}/friends/common/{otherId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> getAllCommonFriendsByUserId(@PathVariable Integer id,
-                                                  @PathVariable Integer otherId,
+    public List<User> getAllCommonFriendsByUserId(@PathVariable int id,
+                                                  @PathVariable int otherId,
                                                   HttpServletRequest request) {
         log.debug("{} [{}] на получение списка общих друзей пользователей [ID={}] и [ID={}]",
                 CLIENT_SEND_REQUEST, request.getMethod(), id, otherId);

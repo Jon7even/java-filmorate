@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEnumRelationStatus;
 import ru.yandex.practicum.filmorate.model.UserRelation;
-import ru.yandex.practicum.filmorate.model.UserRelationStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collections;
@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_FROM_DB;
 import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_IN_DB;
-import static ru.yandex.practicum.filmorate.model.UserRelationStatus.*;
+import static ru.yandex.practicum.filmorate.model.UserEnumRelationStatus.*;
 import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_ADD_LOGIN;
 
 @Slf4j
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
         return listUser;
     }
 
-    public User findUserById(Integer idUser) {
+    public User findUserById(int idUser) {
         userNotFoundByIdCheckPositive(idUser);
         log.debug("{} на получение пользователя [ID={}]", SERVICE_IN_DB, idUser);
         Optional<User> getUser = userStorage.findUserById(idUser);
@@ -111,14 +111,14 @@ public class UserServiceImpl implements UserService {
         return createdUser.get();
     }
 
-    public void addFriend(Integer idUser, Integer idFriend) {
+    public void addFriend(int idUser, int idFriend) {
         log.info("{} на добавление в друзья пользователя [ID={}] к пользователю [ID={}]",
                 SERVICE_IN_DB, idFriend, idUser);
         User getUser = checkExistUser(idUser);
         User getFriend = checkExistUser(idFriend);
-        UserRelationStatus userRelationStatus = userStorage.addFriend(idUser, idFriend);
+        UserEnumRelationStatus status = userStorage.addFriend(idUser, idFriend);
 
-        switch (userRelationStatus) {
+        switch (status) {
             case NO_RELATION:
                 log.error("{} пользователь [login={}] но друг [login={}] не добавлен в БД",
                         SERVICE_FROM_DB, getUser.getLogin(), getFriend.getLogin());
@@ -148,14 +148,14 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public void removeFriend(Integer idUser, Integer idFriend) {
+    public void removeFriend(int idUser, int idFriend) {
         log.debug("{} на удаление из друзей пользователя [ID={}] у пользователя [ID={}]",
                 SERVICE_IN_DB, idFriend, idUser);
         User getUser = checkExistUser(idUser);
         User getFriend = checkExistUser(idFriend);
-        UserRelationStatus userRelationStatus = userStorage.removeFriend(idUser, idFriend);
+        UserEnumRelationStatus status = userStorage.removeFriend(idUser, idFriend);
 
-        switch (userRelationStatus) {
+        switch (status) {
             case NO_RELATION:
                 log.info("{} успешно обновленный [login={}] пользователь: удалена заявка в друзья пользователю " +
                         "[login={}]", SERVICE_FROM_DB, getUser.getLogin(), getFriend.getLogin());
@@ -181,7 +181,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public List<User> getAllFriendsByUserId(Integer idUser) {
+    public List<User> getAllFriendsByUserId(int idUser) {
         log.info("{} на получение списка друзей пользователя [ID={}]", SERVICE_IN_DB, idUser);
         UserRelation user = new UserRelation(checkExistUser(idUser));
         UserRelation userAndFriends = userStorage.getAllFriendsByUserId(user);
@@ -195,7 +195,7 @@ public class UserServiceImpl implements UserService {
         return userAndFriends.sortedListUser();
     }
 
-    public List<User> getAllCommonFriendsByUserId(Integer idUser, Integer idFriend) {
+    public List<User> getAllCommonFriendsByUserId(int idUser, int idFriend) {
         log.info("{} на получение общего списка друзей пользователя [ID={}] " +
                 "с пользователем [ID={}]", SERVICE_IN_DB, idUser, idFriend);
         UserRelation userRelation = new UserRelation(checkExistUser(idUser));
@@ -212,7 +212,7 @@ public class UserServiceImpl implements UserService {
         return listAllCommonFriendsByUserId;
     }
 
-    private User checkExistUser(Integer idUser) {
+    private User checkExistUser(int idUser) {
         userNotFoundByIdCheckPositive(idUser);
         log.debug("{} на проверку пользователя с [ID={}]", SERVICE_IN_DB, idUser);
         Optional<User> checkFoundUser = userStorage.findUserById(idUser);

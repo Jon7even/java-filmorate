@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -46,9 +45,6 @@ public class UserControllerTest {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private UserStorage userStorage;
-
     private Validator validator;
     private User userDefault;
     private User userDefault1;
@@ -69,7 +65,6 @@ public class UserControllerTest {
         userNotName = new User(0, "yandex1@yandex.ru", "userNotName", " ",
                 LocalDate.of(1990, 4, 5));
     }
-
 
     @Test
     @DisplayName("Пользователь должен создаться с релевантными полями")
@@ -256,32 +251,6 @@ public class UserControllerTest {
         assertEquals(1, violations.size(), "Errors than necessary");
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
                 .equals("Поле [birthday] должно содержать прошедшую дату")), "Birthday can't be later");
-    }
-
-    @Test
-    @DisplayName("Если пользователь с таким [login] уже есть в базе")
-    void shouldThrowExceptionSameLoginUser() {
-        userService.createUser(userDefault);
-        userNotName.setLogin(userDefault.getLogin());
-        final ValidationException exceptionSameLoginUser = assertThrows(
-                ValidationException.class,
-                () -> userService.createUser(userNotName));
-        assertEquals("[Field [login] invalid: [Пользователь с таким логином [userDefault] " +
-                        "уже имеется в системе]]",
-                exceptionSameLoginUser.getMessage());
-    }
-
-    @Test
-    @DisplayName("Если пользователь с таким [email] уже есть в базе")
-    void shouldThrowExceptionSameEmailAddAndPutUser() {
-        userService.createUser(userDefault);
-        userNotName.setEmail(userDefault.getEmail());
-        final ValidationException exceptionSameEmailAddUser = assertThrows(
-                ValidationException.class,
-                () -> userService.createUser(userNotName));
-        assertEquals("[Field [login] invalid: [Пользователь с таким email [yandex@yandex.ru] " +
-                        "уже имеется в системе]]",
-                exceptionSameEmailAddUser.getMessage());
     }
 
     @Test
