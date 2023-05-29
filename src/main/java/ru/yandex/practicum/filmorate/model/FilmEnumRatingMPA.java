@@ -31,7 +31,6 @@ public enum FilmEnumRatingMPA {
         }
     }
 
-    @JsonCreator
     public static FilmEnumRatingMPA valueNumber(int number) {
         try {
             return ID_MPA.get(number);

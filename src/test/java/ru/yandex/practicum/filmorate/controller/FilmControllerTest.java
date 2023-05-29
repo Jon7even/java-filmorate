@@ -13,7 +13,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmEnumRatingMPA;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -26,7 +25,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -58,6 +57,7 @@ public class FilmControllerTest {
     private Film filmDefault1;
     private Film filmDefault2;
     private User userDefault;
+    private User userDefault1;
 
     @BeforeEach
     void setUp() {
@@ -70,19 +70,19 @@ public class FilmControllerTest {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
                 LocalDate.of(1901, 1, 1), 100, 1);
         filmDefault2 = new Film(1, "filmDefault2", "description2",
-                LocalDate.of(2007, 7, 1), 300, 2);
+                LocalDate.of(2007, 7, 1), 300, 4);
         userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
                 LocalDate.of(2000, 1, 1));
+        userDefault1 = new User(1, "yandex1@yandex.ru", "userDefault1", "UserTest1",
+                LocalDate.of(2000, 1, 2));
     }
-
 
     @Test
     @DisplayName("Фильм должен создаться с релевантными полями")
     void shouldCreateFilm_thenStatus201() throws Exception {
-        mockMvc.perform(
-                        post("/films")
-                                .content(objectMapper.writeValueAsString(filmDefault1))
-                                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(filmDefault1))
+                        .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("id").value(1))
@@ -92,7 +92,6 @@ public class FilmControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("duration").value("100"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.mpa.id").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.mpa.name").value("G"));
-
     }
 
     @Test
@@ -132,26 +131,36 @@ public class FilmControllerTest {
         mockMvc.perform(get("/films/popular"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
-        int idFilm1 = filmService.addFilm(filmDefault1).getId();
+        int idFilm = filmService.addFilm(filmDefault1).getId();
+        int idFilm1 = filmService.addFilm(filmDefault2).getId();
         int idUser1 = userService.createUser(userDefault).getId();
+        int idUser2 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(put("/films/{id}/like/{userId}", idFilm1, idUser1))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/films/{id}", idFilm1))
-                .andExpect(jsonPath("$.likes", hasSize(1)))
-                .andExpect(jsonPath("$.likes[0]", equalTo(idUser1)))
-                .andExpect(jsonPath("$.countLikes", equalTo(idUser1)));
-
         mockMvc.perform(get("/films/popular", 1))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm1));
 
-        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm1, idUser1))
+        mockMvc.perform(put("/films/{id}/like/{userId}", idFilm, idUser2))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/films/{id}", idFilm1))
-                .andExpect(jsonPath("$.likes", hasSize(0)))
-                .andExpect(jsonPath("$.likes", empty()))
-                .andExpect(jsonPath("$.countLikes", equalTo(0)));
+        mockMvc.perform(put("/films/{id}/like/{userId}", idFilm, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/popular", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm));
+
+        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm, idUser2))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/popular", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm1));
+
     }
 
     @Test
