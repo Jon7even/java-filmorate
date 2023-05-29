@@ -125,7 +125,7 @@ public class FilmDbStorage implements FilmStorage {
             if (filmIdGenres.isEmpty()) {
                 log.debug("При добавлении нового фильма [ID={}] жанры не указаны", newFilmId);
             } else {
-                UpdateGenresByListFilm(filmIdGenres, newFilmId);
+                updateGenresByListFilm(filmIdGenres, newFilmId);
             }
             return findFilmById(newFilmId);
         } catch (DataAccessException e) {
@@ -162,7 +162,7 @@ public class FilmDbStorage implements FilmStorage {
                 log.debug("{} на удаление [COUNT={}] жанров", DB_RUNNING, genres.size());
                 genres.forEach(filmGenre -> removeGenreByFilm(filmId, filmGenre.getId()));
 
-                UpdateGenresByListFilm(film.getGenres(), filmId);
+                updateGenresByListFilm(film.getGenres(), filmId);
                 log.debug("{} обновлен фильм [ID={}] и жанры", DB_SUCCESS, filmId);
             }
             return findFilmById(filmId);
@@ -276,7 +276,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private void UpdateGenresByListFilm(Set<FilmGenre> filmIdGenres, int idFilm) {
+    private void updateGenresByListFilm(Set<FilmGenre> filmIdGenres, int idFilm) {
         log.debug("{} на добавление [COUNT={}] жанров", DB_RUNNING, filmIdGenres.size());
         filmIdGenres.forEach(filmGenre -> addGenreByFilm(idFilm, filmGenre.getId()));
     }
