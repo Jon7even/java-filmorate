@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,12 +24,9 @@ import static ru.yandex.practicum.filmorate.constants.NameLogs.DB_SUCCESS;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
-
-    public FilmDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public List<Film> getAllFilms() {
         log.debug("{} на получение списка всех фильмов", DB_RUNNING);
@@ -80,7 +78,6 @@ public class FilmDbStorage implements FilmStorage {
                         "    BY id";
                 Set<FilmGenre> filmGenres = jdbcTemplate.queryForStream(sqlGetGenreForFilm,
                         filmGenreRowMapper(), idFilm).collect(Collectors.toSet());
-                ;
                 int countGenres = filmGenres.size();
                 Film foundFilm = films.get(0);
 
@@ -91,11 +88,9 @@ public class FilmDbStorage implements FilmStorage {
                     foundFilm.setGenres(filmGenres.stream()
                             .sorted(Comparator.comparingInt(FilmGenre::getId))
                             .collect(Collectors.toCollection(LinkedHashSet::new)));
-
                 }
                 return Optional.ofNullable(foundFilm);
             }
-
         } catch (DataAccessException e) {
             log.error(e.getMessage());
             throw new NotFoundException(String.format("Film with ID=%d", idFilm));

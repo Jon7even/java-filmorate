@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
@@ -13,16 +13,12 @@ import java.util.List;
 
 import static ru.yandex.practicum.filmorate.constants.NameLogs.CLIENT_SEND_REQUEST;
 
-@Slf4j
 @RestController
 @RequestMapping("/mpa")
+@Slf4j
+@RequiredArgsConstructor
 public class RatingMPAController {
-    private RatingMPAService ratingMPAService;
-
-    @Autowired
-    public RatingMPAController(RatingMPAService ratingMPAService) {
-        this.ratingMPAService = ratingMPAService;
-    }
+    private final RatingMPAService ratingMPAService;
 
     @GetMapping
     public List<FilmRatingMPA> getAllMPA(HttpServletRequest request) {

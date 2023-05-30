@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotCreatedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -19,15 +19,10 @@ import static ru.yandex.practicum.filmorate.constants.NameLogs.SERVICE_IN_DB;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    @Autowired
-    public FilmServiceImpl(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
 
     public List<Film> getAllFilms() {
         log.debug("{} на получение списка всех фильмов", SERVICE_IN_DB);

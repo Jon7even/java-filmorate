@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -21,13 +21,9 @@ import static ru.yandex.practicum.filmorate.utils.BanListUserName.BAN_LIST_ADD_L
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserServiceImpl(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
     public List<User> getAllUsers() {
         log.debug("{} на получение списка всех пользователей", SERVICE_IN_DB);
