@@ -5,17 +5,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -24,16 +25,18 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
+import static ru.yandex.practicum.filmorate.utils.MinDateFilms.SET_MIN_DATE;
 
 @SpringBootTest
+@AutoConfigureTestDatabase
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -48,16 +51,16 @@ public class FilmControllerTest {
     private UserService userService;
 
     @Autowired
-    private InMemoryFilmStorage filmStorage;
+    private FilmStorage filmStorage;
 
     private Validator validator;
     private Film filmDefault1;
     private Film filmDefault2;
     private User userDefault;
+    private User userDefault1;
 
     @BeforeEach
     void setUp() {
-        filmStorage.clearRepository();
         ValidatorFactory factory = buildDefaultValidatorFactory();
         validator = factory.getValidator();
         initFilmsAndUser();
@@ -65,28 +68,30 @@ public class FilmControllerTest {
 
     void initFilmsAndUser() {
         filmDefault1 = new Film(0, "filmDefault1", "description1",
-                LocalDate.of(1900, 1, 1), 100, "default", "");
+                LocalDate.of(1901, 1, 1), 100, 1);
         filmDefault2 = new Film(1, "filmDefault2", "description2",
-                LocalDate.of(2007, 7, 1), 300, "default", "");
+                LocalDate.of(2007, 7, 1), 300, 4);
         userDefault = new User(0, "yandex@yandex.ru", "userDefault", "UserTest",
                 LocalDate.of(2000, 1, 1));
+        userDefault1 = new User(1, "yandex1@yandex.ru", "userDefault1", "UserTest1",
+                LocalDate.of(2000, 1, 2));
     }
-
 
     @Test
     @DisplayName("Фильм должен создаться с релевантными полями")
     void shouldCreateFilm_thenStatus201() throws Exception {
-        mockMvc.perform(
-                        post("/films")
-                                .content(objectMapper.writeValueAsString(filmDefault1))
-                                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(filmDefault1))
+                        .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("id").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("name").value("filmDefault1"))
                 .andExpect(MockMvcResultMatchers.jsonPath("description").value("description1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("1900-01-01"))
-                .andExpect(MockMvcResultMatchers.jsonPath("duration").value("100"));
+                .andExpect(MockMvcResultMatchers.jsonPath("releaseDate").value("1901-01-01"))
+                .andExpect(MockMvcResultMatchers.jsonPath("duration").value("100"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.mpa.id").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.mpa.name").value("G"));
     }
 
     @Test
@@ -126,26 +131,36 @@ public class FilmControllerTest {
         mockMvc.perform(get("/films/popular"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
-        int idFilm1 = filmService.addFilm(filmDefault1).getId();
+        int idFilm = filmService.addFilm(filmDefault1).getId();
+        int idFilm1 = filmService.addFilm(filmDefault2).getId();
         int idUser1 = userService.createUser(userDefault).getId();
+        int idUser2 = userService.createUser(userDefault1).getId();
 
         mockMvc.perform(put("/films/{id}/like/{userId}", idFilm1, idUser1))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/films/{id}", idFilm1))
-                .andExpect(jsonPath("$.likes", hasSize(1)))
-                .andExpect(jsonPath("$.likes[0]", equalTo(idUser1)))
-                .andExpect(jsonPath("$.countLikes", equalTo(idUser1)));
-
         mockMvc.perform(get("/films/popular", 1))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm1));
 
-        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm1, idUser1))
+        mockMvc.perform(put("/films/{id}/like/{userId}", idFilm, idUser2))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/films/{id}", idFilm1))
-                .andExpect(jsonPath("$.likes", hasSize(0)))
-                .andExpect(jsonPath("$.likes", empty()))
-                .andExpect(jsonPath("$.countLikes", equalTo(0)));
+        mockMvc.perform(put("/films/{id}/like/{userId}", idFilm, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/popular", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm));
+
+        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm, idUser1))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/films/{id}/like/{userId}", idFilm, idUser2))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/films/popular", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(idFilm1));
+
     }
 
     @Test
@@ -176,36 +191,6 @@ public class FilmControllerTest {
         assertTrue(violations.stream().anyMatch(t -> t.getMessage()
                         .equals("Длина поля [description] должен быть в диапазоне [от 0 до 200 символов]")),
                 "Maximum length of the [description] is 200 characters");
-    }
-
-    @Test
-    @DisplayName("Если поле [genre] некорректно, валидатор должен сработать")
-    void shouldNotCreateFilmWithGenreLength20() {
-        filmDefault1.setGenre("test1test2test3test4t");
-        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
-        assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Длина поля [genre] должна быть в диапазоне [от 0 до 20 символов]")),
-                "Maximum length of the [genre] is 20 characters");
-    }
-
-    @Test
-    @DisplayName("Если поле [rating] некорректно, валидатор должен сработать")
-    void shouldNotCreateFilmWithRatingLength10() {
-        filmDefault1.setRating("test1test2t");
-        Set<ConstraintViolation<Film>> violations = validator.validate(filmDefault1);
-        assertEquals(1, violations.size(), "Errors than necessary");
-        assertTrue(violations.stream().anyMatch(t -> t.getMessage()
-                        .equals("Длина поля [rating] должна быть в диапазоне [от 0 до 10 символов]")),
-                "Maximum length of the [rating] is 10 characters");
-    }
-
-    @Test
-    @DisplayName("Если поле [rating] не указано, должен быть выставлен максимальный рейтинг [NC-17]")
-    void shouldBeRatingSetDefaultWhenFieldEmpty() {
-        filmService.addFilm(filmDefault1);
-        Film getFilm = filmService.findFilmById(1);
-        assertEquals(FilmRating.NC_17.toString(), getFilm.getRating(), "Rating Film don't equals");
     }
 
     @Test

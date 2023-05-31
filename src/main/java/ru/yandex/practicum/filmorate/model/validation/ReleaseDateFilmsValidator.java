@@ -4,7 +4,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.SET_MIN_DATE;
+import static ru.yandex.practicum.filmorate.utils.MinDateFilms.SET_MIN_DATE;
 
 public class ReleaseDateFilmsValidator implements ConstraintValidator<ReleaseDateFilms, LocalDate> {
     @Override

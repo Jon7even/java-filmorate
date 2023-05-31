@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
@@ -12,17 +12,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.CLIENT_SEND_REQUEST;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.CLIENT_SEND_REQUEST;
 
 @RestController
 @RequestMapping("/films")
 @Slf4j
+@RequiredArgsConstructor
 public class FilmController {
-    private FilmService filmService;
+    private final FilmService filmService;
 
-    @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Film getFilm(@PathVariable("id") int id,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] на получение фильма по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
+        return filmService.findFilmById(id);
     }
 
     @GetMapping
@@ -47,14 +51,6 @@ public class FilmController {
         return filmService.updateFilm(film);
     }
 
-    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public Film getFilm(@PathVariable("id") int id,
-                        HttpServletRequest request) {
-        log.debug("{} [{}] на получение фильма по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
-        return filmService.findFilmById(id);
-    }
-
     @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable int id,
@@ -77,7 +73,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     @ResponseStatus(HttpStatus.OK)
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count,
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) int count,
                                       HttpServletRequest request) {
         log.debug("{} [{}] на получение списка популярных фильмов", CLIENT_SEND_REQUEST, request.getMethod());
         if (!(count <= 0)) {

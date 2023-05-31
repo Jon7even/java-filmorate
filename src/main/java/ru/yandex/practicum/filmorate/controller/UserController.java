@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -11,18 +11,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
-import static ru.yandex.practicum.filmorate.constans.Settings.CLIENT_SEND_REQUEST;
+import static ru.yandex.practicum.filmorate.constants.NameLogs.CLIENT_SEND_REQUEST;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
-    private UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    private final UserService userService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -31,12 +27,12 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody User user,
-                           HttpServletRequest request) {
-        log.debug("{} [{}] на добавление нового пользователя", CLIENT_SEND_REQUEST, request.getMethod());
-        return userService.createUser(user);
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public User getUser(@PathVariable int id,
+                        HttpServletRequest request) {
+        log.debug("{} [{}] на получение пользователя по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
+        return userService.findUserById(id);
     }
 
     @PutMapping
@@ -48,12 +44,12 @@ public class UserController {
         return userService.updateUser(user);
     }
 
-    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public User getUser(@PathVariable int id,
-                        HttpServletRequest request) {
-        log.debug("{} [{}] на получение пользователя по [ID={}]", CLIENT_SEND_REQUEST, request.getMethod(), id);
-        return userService.findUserById(id);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public User createUser(@Valid @RequestBody User user,
+                           HttpServletRequest request) {
+        log.debug("{} [{}] на добавление нового пользователя", CLIENT_SEND_REQUEST, request.getMethod());
+        return userService.createUser(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

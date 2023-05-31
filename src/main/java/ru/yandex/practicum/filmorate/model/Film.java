@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.model.validation.ReleaseDateFilms;
 
@@ -29,35 +30,40 @@ public class Film {
     @Positive(message = "Поле [duration] должно быть положительным")
     private long duration;
 
-    @Size(max = 20, message = "Длина поля [genre] должна быть в диапазоне [от 0 до 20 символов]")
-    private String genre;
+    private FilmRatingMPA mpa;
 
-    @Size(max = 10, message = "Длина поля [rating] должна быть в диапазоне [от 0 до 10 символов]")
-    private String rating;
+    private Set<FilmGenre> genres;
 
-    private Set<Integer> likes;
-
-    public Film(int id, String name, String description, LocalDate releaseDate, long duration, String genre,
-                String rating) {
+    @JsonCreator
+    public Film(int id, String name, String description, LocalDate releaseDate, long duration, int mpaInt) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        this.genre = genre;
-        this.rating = rating;
-        this.likes = new HashSet<>();
+        this.mpa = new FilmRatingMPA(mpaInt);
+        this.genres = new HashSet<>();
     }
 
-    public void addLike(int id) {
-        likes.add(id);
+    public Film(int id, String name, String description, LocalDate releaseDate, long duration, int mpaInt,
+                Set<FilmGenre> genres) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.mpa = new FilmRatingMPA(mpaInt);
+        this.genres = new HashSet<>(genres);
     }
 
-    public void removeLike(int id) {
-        likes.remove(id);
+    public Film(int id, String name, String description, LocalDate releaseDate, long duration, String mpaString) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.mpa = new FilmRatingMPA(mpaString);
+        this.genres = new HashSet<>();
     }
 
-    public int getCountLikes() {
-        return likes.size();
-    }
 }
