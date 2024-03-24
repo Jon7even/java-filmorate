@@ -109,6 +109,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
+
     public UserEnumRelationStatus addFriend(int idUser, int idFriend) {
         log.debug("{} на добавление друга [ID={}] пользователю [ID={}]", DB_RUNNING, idFriend, idUser);
         UserEnumRelationStatus status = getUserRelationStatus(idUser, idFriend);

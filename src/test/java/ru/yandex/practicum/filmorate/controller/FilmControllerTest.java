@@ -28,7 +28,10 @@ import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.yandex.practicum.filmorate.utils.MinDateFilms.SET_MIN_DATE;
@@ -160,7 +163,6 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].id").value(idFilm1));
-
     }
 
     @Test
@@ -178,7 +180,6 @@ public class FilmControllerTest {
         assertTrue(violations.stream().anyMatch(t -> t.getMessage().equals("Поле [name] не должно быть пустым")),
                 "[name] not be empty");
     }
-
 
     @Test
     @DisplayName("Если поле [description] некорректно, валидатор должен сработать")
@@ -214,4 +215,5 @@ public class FilmControllerTest {
                         .anyMatch(t -> t.getMessage().equals("Поле [duration] должно быть положительным")),
                 "[duration] of the film should be positive");
     }
+
 }

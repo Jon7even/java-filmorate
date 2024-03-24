@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.7.10</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>ru.yandex.practicum</groupId>
     <artifactId>filmorate</artifactId>
@@ -15,6 +15,7 @@
     <description>Backend for project Filmorate</description>
     <properties>
         <java.version>11</java.version>
+        <version.lombok>1.18.18</version.lombok>
     </properties>
     <dependencies>
 
@@ -26,6 +27,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -51,6 +53,7 @@
         </dependency>
 
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -59,4 +62,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
